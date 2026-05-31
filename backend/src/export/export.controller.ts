@@ -26,6 +26,7 @@ import {
 import type { Response as ExpressResponse } from "express-serve-static-core";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { ExportService } from "./export.service";
+import { respondWithDownload } from "./export-download.responder";
 import {
   CreateExportDto,
   ScheduleExportDto,
@@ -116,19 +117,9 @@ export class ExportController {
     @Param("id") id: string,
     @Res() res: ExpressResponse,
   ): Promise<void> {
-    const { download, fileName } = await this.exportService.downloadExport(
-      id,
-      req.user.id,
-    );
-
-    res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
-    if (download.type === "redirect") {
-      res.redirect(download.url);
-      return;
-    }
-
-    res.setHeader("Content-Type", download.contentType);
-    res.sendFile(download.path);
+    const ctx = await this.exportService.downloadExport(id, req.user.id);
+    // Issue #510 — delegate all header/delivery mechanics to the responder
+    respondWithDownload(res, ctx);
   }
 
   @Get("list")

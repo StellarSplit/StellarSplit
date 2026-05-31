@@ -1,4 +1,5 @@
-import React, { useState, useRef, useCallback } from "react";
+import React, { useRef } from "react";
+import { useCreateGroupFlow, STEPS } from "./useCreateGroupFlow";
 import {
   X,
   ChevronRight,
@@ -264,68 +265,35 @@ export function CreateGroupModal({
   currentUserName = "You",
   currentUserEmail = "you@example.com",
 }: CreateGroupModalProps) {
-  const [stepIndex, setStepIndex] = useState(0);
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [emoji, setEmoji] = useState("🎉");
-  const [accentColor, setAccentColor] = useState(GROUP_COLORS[0]);
-  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
-  const [members, setMembers] = useState<Member[]>([
-    {
-      id: currentUserId,
-      name: currentUserName,
-      email: currentUserEmail,
-      initials: getInitials(currentUserName),
-      color: MEMBER_COLORS[0],
-      role: "owner",
-    },
-  ]);
+  // Issue #508 — flow state extracted to useCreateGroupFlow hook
+  const {
+    stepIndex,
+    currentStep,
+    isFirst,
+    isLast,
+    canProceed,
+    goNext,
+    goBack,
+    draft,
+    setName,
+    setDescription,
+    setEmoji,
+    setAccentColor,
+    setUploadedImage,
+    setMembers,
+    reset,
+    buildPayload,
+  } = useCreateGroupFlow({ currentUserId, currentUserName, currentUserEmail });
 
-  const currentStep = STEPS[stepIndex];
-  const isFirst = stepIndex === 0;
-  const isLast = stepIndex === STEPS.length - 1;
-
-  const canProceed =
-    currentStep === "Details" ? name.trim().length >= 2 : true;
-
-  const handleReset = useCallback(() => {
-    setStepIndex(0);
-    setName("");
-    setDescription("");
-    setEmoji("🎉");
-    setAccentColor(GROUP_COLORS[0]);
-    setUploadedImage(null);
-    setMembers([
-      {
-        id: currentUserId,
-        name: currentUserName,
-        email: currentUserEmail,
-        initials: getInitials(currentUserName),
-        color: MEMBER_COLORS[0],
-        role: "owner",
-      },
-    ]);
-  }, [currentUserId, currentUserEmail, currentUserName]);
+  const { name, description, emoji, accentColor, uploadedImage, members } = draft;
 
   const handleClose = () => {
     onOpenChange(false);
-    setTimeout(handleReset, 300);
+    setTimeout(reset, 300);
   };
 
   const handleCreate = () => {
-    const group: Group = {
-      id: `g_${Date.now()}`,
-      name: name.trim(),
-      description: description.trim() || undefined,
-      emoji,
-      accentColor,
-      members,
-      totalSpent: 0,
-      currency: "USD",
-      createdAt: new Date(),
-      lastActivityAt: new Date(),
-    };
-    onCreated(group);
+    onCreated(buildPayload());
     handleClose();
   };
 
@@ -394,7 +362,7 @@ export function CreateGroupModal({
         {/* Footer */}
         <div className="flex items-center justify-between px-6 py-4 border-t-[0.5px] border-gray-300 bg-theme">
           <Button
-            onClick={isFirst ? handleClose : () => setStepIndex((i) => i - 1)}
+            onClick={isFirst ? handleClose : goBack}
             className="text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800"
           >
             {isFirst ? (
@@ -417,7 +385,7 @@ export function CreateGroupModal({
             </Button>
           ) : (
             <Button
-              onClick={() => setStepIndex((i) => i + 1)}
+              onClick={goNext}
               disabled={!canProceed}
               className="bg-amber-500 hover:bg-amber-400 text-zinc-900 font-semibold px-5 gap-1 transition-all"
             >

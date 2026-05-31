@@ -1,15 +1,22 @@
-import { useMemo } from "react";
+/**
+ * NotificationCenter.tsx — Issue #509
+ *
+ * Production notification list with filtering and bulk-action controls.
+ * Demo / simulation tooling has been extracted to NotificationDemoTools.tsx
+ * and is rendered only when `import.meta.env.DEV` is true.
+ */
+
+import { lazy, Suspense, useMemo } from "react";
 import { useNotificationsStore } from "../../store/notifications";
 import type { NotificationType } from "../../types/notifications";
 import { NOTIFICATION_TYPE_LABELS } from "../../types/notifications";
 import { NotificationItem } from "./NotificationItem";
 import { Button } from "../ui/button";
 
-const DEMO_MESSAGES: Array<{ type: NotificationType; title: string; message: string }> = [
-  { type: "split_invitation", title: "Split invitation", message: "You were invited to a new split." },
-  { type: "payment_received", title: "Payment received", message: "A payment was received." },
-  { type: "system_announcement", title: "Update", message: "New feature available." },
-];
+// Lazily import demo tools so they are tree-shaken out of production bundles.
+const NotificationDemoTools = lazy(() =>
+  import("./NotificationDemoTools").then((m) => ({ default: m.NotificationDemoTools }))
+);
 
 const FILTER_OPTIONS: (NotificationType | "all")[] = [
   "all",
@@ -28,7 +35,6 @@ export function NotificationCenter() {
   const setTypeFilter = useNotificationsStore((state) => state.setTypeFilter);
   const markAllAsRead = useNotificationsStore((state) => state.markAllAsRead);
   const clearAll = useNotificationsStore((state) => state.clearAll);
-  const addNotification = useNotificationsStore((state) => state.addNotification);
 
   const filteredList = useMemo(() => {
     if (typeFilter === "all") return [...notifications];
@@ -39,11 +45,6 @@ export function NotificationCenter() {
     () => notifications.filter((n) => !n.read).length,
     [notifications]
   );
-
-  const simulateNew = () => {
-    const item = DEMO_MESSAGES[Math.floor(Math.random() * DEMO_MESSAGES.length)];
-    addNotification(item);
-  };
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 sm:py-8" data-testid="notification-center">
@@ -73,17 +74,11 @@ export function NotificationCenter() {
         </div>
       </header>
 
+      {/* Demo tools — development only, lazy-loaded and tree-shaken in prod */}
       {import.meta.env.DEV && (
-        <div className="mb-4 flex flex-wrap items-center gap-4">
-          <button
-            type="button"
-            onClick={simulateNew}
-            className="text-sm text-accent hover:underline"
-            data-testid="simulate-notification"
-          >
-            Simulate new notification
-          </button>
-        </div>
+        <Suspense fallback={null}>
+          <NotificationDemoTools className="mb-4" />
+        </Suspense>
       )}
 
       <div className="mb-4">
