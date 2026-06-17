@@ -1,5 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { Cron, CronExpression } from "@nestjs/schedule";
+import { Cron } from "@nestjs/schedule";
 import { RecurringSplitsService } from "./recurring-splits.service";
 import { PaymentGateway } from "../websocket/payment.gateway";
 
@@ -16,8 +16,9 @@ export class RecurringSplitsScheduler {
    * Cron job to generate splits from recurring split templates
    * Runs every 6 hours to check for due recurring splits
    */
-  @Cron(CronExpression.EVERY_6_HOURS)
+  @Cron("0 */6 * * *", { timeZone: process.env.TZ || "UTC" })
   async processRecurringSplits(): Promise<void> {
+    if (process.env.NODE_ENV === "test") return;
     this.logger.log("Starting recurring splits processing...");
 
     try {
@@ -75,8 +76,9 @@ export class RecurringSplitsScheduler {
    * Cron job to send reminders for upcoming recurring splits
    * Runs twice daily at 9 AM and 5 PM
    */
-  @Cron("0 9,17 * * *") // 9 AM and 5 PM UTC
+  @Cron("0 9,17 * * *", { timeZone: process.env.TZ || "UTC" }) // 9 AM and 5 PM local time
   async sendRecurringSplitReminders(): Promise<void> {
+    if (process.env.NODE_ENV === "test") return;
     this.logger.log("Starting recurring splits reminder check...");
 
     try {
@@ -137,8 +139,9 @@ export class RecurringSplitsScheduler {
    * Cron job to cleanup and deactivate expired recurring splits
    * Runs once daily at 2 AM
    */
-  @Cron("0 2 * * *") // 2 AM UTC
+  @Cron("0 2 * * *", { timeZone: process.env.TZ || "UTC" }) // 2 AM local time
   async cleanupExpiredRecurringSplits(): Promise<void> {
+    if (process.env.NODE_ENV === "test") return;
     this.logger.log("Starting expired recurring splits cleanup...");
 
     try {
