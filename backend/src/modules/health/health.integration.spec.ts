@@ -4,7 +4,10 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import request from 'supertest';
 import { ConfigService } from '@nestjs/config';
 import { DataSource } from 'typeorm';
-import { HealthModule } from './health.module';
+import { HealthController } from './health.controller';
+import { HealthService } from './health.service';
+import { HealthCheckService } from './health-check.service';
+import { OcrWorkerPool } from '../../ocr/ocr-worker.pool';
 
 const mockPing = jest.fn().mockResolvedValue('PONG');
 
@@ -17,6 +20,7 @@ jest.mock('ioredis', () => {
 describe('Health endpoint integration', () => {
   let app: INestApplication;
   let swaggerDocument: Record<string, any>;
+  let mockOcrPool: { getHealthStatus: jest.Mock };
 
   beforeAll(async () => {
     process.env.NODE_ENV = 'test';
@@ -28,29 +32,32 @@ describe('Health endpoint integration', () => {
     process.env.JWT_SECRET = 'testsecretkey-with-length-32-characters!';
     process.env.REDIS_URL = 'redis://127.0.0.1:6379';
 
+    mockOcrPool = { getHealthStatus: jest.fn().mockReturnValue({ total: 2, available: 2, failed: 0 }) };
+
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [HealthModule],
+      controllers: [HealthController],
       providers: [
+        HealthService,
+        HealthCheckService,
         {
           provide: ConfigService,
           useValue: {
             get: (key: string) => {
               switch (key) {
-                case 'APP_VERSION':
-                  return '1.2.3';
-                case 'REDIS_URL':
-                  return process.env.REDIS_URL;
-                default:
-                  return undefined;
+                case 'APP_VERSION': return '1.2.3';
+                case 'REDIS_URL': return process.env.REDIS_URL;
+                default: return undefined;
               }
             },
           },
         },
         {
           provide: DataSource,
-          useValue: {
-            query: jest.fn().mockResolvedValue([{ '1': 1 }]),
-          },
+          useValue: { query: jest.fn().mockResolvedValue([{ '1': 1 }]) },
+        },
+        {
+          provide: OcrWorkerPool,
+          useValue: mockOcrPool,
         },
       ],
     }).compile();
@@ -95,5 +102,16 @@ describe('Health endpoint integration', () => {
       redis: expect.objectContaining({ status: 'up' }),
       environment: expect.objectContaining({ status: 'up' }),
     }));
+  });
+
+  it('includes ocr status with workers count in /health/ready', async () => {
+    const response = await request(app.getHttpServer()).get('/health/ready').expect(200);
+    expect(response.body.checks.ocr).toEqual({ status: 'up', workers: 2 });
+  });
+
+  it('reports ocr as down when no workers are available', async () => {
+    mockOcrPool.getHealthStatus.mockReturnValueOnce({ total: 2, available: 0, failed: 2 });
+    const response = await request(app.getHttpServer()).get('/health/ready');
+    expect(response.body.checks.ocr).toEqual({ status: 'down', workers: 0 });
   });
 });

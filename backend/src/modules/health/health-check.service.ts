@@ -1,8 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DataSource } from 'typeorm';
 import Redis from 'ioredis';
 import { validateEnvironment, getEnvironmentInfo, Environment } from '../../config/env.validation';
+import { OcrWorkerPool } from '../../ocr/ocr-worker.pool';
 
 export type HealthStatus = {
   status: 'healthy' | 'unhealthy' | 'degraded';
@@ -15,6 +16,7 @@ export type ComponentHealth = {
   status: 'up' | 'down' | 'degraded';
   latencyMs?: number;
   error?: string;
+  workers?: number;
 };
 
 export interface ReadinessResponse extends HealthStatus {
@@ -22,6 +24,7 @@ export interface ReadinessResponse extends HealthStatus {
     database: ComponentHealth;
     redis: ComponentHealth;
     environment: ComponentHealth;
+    ocr: ComponentHealth;
   };
 }
 
@@ -38,6 +41,7 @@ export class HealthCheckService {
   constructor(
     private readonly configService: ConfigService,
     private readonly dataSource: DataSource,
+    @Optional() private readonly ocrWorkerPool?: OcrWorkerPool,
   ) {
     const redisUrl = this.configService.get<string>('REDIS_URL');
     if (redisUrl) {
@@ -72,6 +76,7 @@ export class HealthCheckService {
       database: await this.checkDatabase(),
       redis: await this.checkRedis(),
       environment: this.checkEnvironment(),
+      ocr: this.checkOcr(),
     };
 
     let status: 'healthy' | 'unhealthy' | 'degraded' = 'healthy';
@@ -87,6 +92,17 @@ export class HealthCheckService {
       version: this.configService.get<string>('APP_VERSION') || '1.0.0',
       uptime: this.getUptimeSeconds(),
       checks,
+    };
+  }
+
+  private checkOcr(): ComponentHealth {
+    if (!this.ocrWorkerPool) {
+      return { status: 'degraded', error: 'OCR pool not configured' };
+    }
+    const { available } = this.ocrWorkerPool.getHealthStatus();
+    return {
+      status: available > 0 ? 'up' : 'down',
+      workers: available,
     };
   }
 

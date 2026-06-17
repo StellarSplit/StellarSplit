@@ -4,12 +4,24 @@ import { ReceiptParser, ParsedReceipt } from "./parsers/receipt-parser";
 // #479: Replace single lazy worker with a managed pool
 import { OcrWorkerPool } from "./ocr-worker.pool";
 
+/** Thrown when worker.recognize() exceeds OCR_TIMEOUT_MS (#568). */
+export class OcrTimeoutError extends Error {
+  constructor() {
+    super('OCR recognition timed out after 30 seconds');
+    this.name = 'OcrTimeoutError';
+  }
+}
+
+const OCR_TIMEOUT_MS = 30_000;
+
 @Injectable()
 export class OcrService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(OcrService.name);
-  private readonly pool = new OcrWorkerPool();
 
-  constructor(private readonly receiptParser: ReceiptParser) {}
+  constructor(
+    private readonly receiptParser: ReceiptParser,
+    private readonly pool: OcrWorkerPool,
+  ) {}
 
   // ── Lifecycle (#479) ──────────────────────────────────────────────────────
 
@@ -31,6 +43,11 @@ export class OcrService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
+  /** Expose pool for health/availability checks (#568). */
+  getPool(): OcrWorkerPool {
+    return this.pool;
+  }
+
   /**
    * Process receipt image and extract structured data.
    * Acquires a worker from the pool, executes OCR, then releases the worker.
@@ -43,8 +60,11 @@ export class OcrService implements OnModuleInit, OnModuleDestroy {
       // Preprocess image
       const processedImage = await this.preprocessImage(imageBuffer);
 
-      // Perform OCR
-      const { data } = await worker.recognize(processedImage);
+      // Perform OCR with a 30-second timeout (#568)
+      const timeout = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new OcrTimeoutError()), OCR_TIMEOUT_MS),
+      );
+      const { data } = await Promise.race([worker.recognize(processedImage), timeout]);
       const ocrText = data.text;
       const ocrConfidence = data.confidence / 100; // Convert to 0-1 scale
 

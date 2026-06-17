@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { Injectable, Logger, NotFoundException, ServiceUnavailableException } from "@nestjs/common";
 import { InjectQueue } from "@nestjs/bull";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Queue, Job } from "bull";
@@ -28,6 +28,12 @@ export class OcrQueueService {
    * Create a new OCR job and add it to the queue
    */
   async createJob(dto: CreateOcrJobDto, imageBuffer?: Buffer): Promise<OcrJob> {
+    // Fail fast when no workers are available (#568)
+    const { available } = this.ocrService.getPool().getHealthStatus();
+    if (available === 0) {
+      throw new ServiceUnavailableException('OCR service is unavailable: no workers are ready');
+    }
+
     // Create the job record in the database
     const ocrJob = this.ocrJobRepository.create({
       itemId: dto.itemId,

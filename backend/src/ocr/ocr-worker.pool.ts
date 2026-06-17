@@ -1,5 +1,5 @@
 /**
- * OCR worker pool (#479)
+ * OCR worker pool (#479, #568)
  *
  * Manages a bounded pool of Tesseract workers so that concurrent scan
  * requests do not create unbounded workers or drop requests silently.
@@ -12,7 +12,7 @@
  *
  * The pool resolves pending `acquire()` calls in FIFO order.
  */
-import { Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { createWorker, Worker } from 'tesseract.js';
 
 export interface OcrWorkerPoolOptions {
@@ -22,22 +22,32 @@ export interface OcrWorkerPoolOptions {
   language?: string;
 }
 
+export interface OcrHealthStatus {
+  total: number;
+  available: number;
+  failed: number;
+}
+
+@Injectable()
 export class OcrWorkerPool {
   private readonly logger = new Logger(OcrWorkerPool.name);
   private workers: Worker[] = [];
   private available: Worker[] = [];
   private queue: Array<(worker: Worker) => void> = [];
   private initialized = false;
+  private failedWorkers = 0;
+  private totalConfigured = 0;
 
   async initialize(options: OcrWorkerPoolOptions = {}): Promise<void> {
     if (this.initialized) return;
 
     const size     = options.poolSize ?? 2;
     const language = options.language ?? 'eng';
+    this.totalConfigured = size;
 
     this.logger.log(`Initializing OCR worker pool (size: ${size})`);
 
-    const created = await Promise.all(
+    const results = await Promise.allSettled(
       Array.from({ length: size }, () =>
         createWorker(language, 1, {
           logger: (m) => {
@@ -49,11 +59,30 @@ export class OcrWorkerPool {
       ),
     );
 
-    this.workers = created;
-    this.available = [...created];
+    for (const result of results) {
+      if (result.status === 'fulfilled') {
+        this.workers.push(result.value);
+        this.available.push(result.value);
+      } else {
+        this.failedWorkers++;
+        this.logger.error('Failed to initialize OCR worker', result.reason);
+      }
+    }
+
     this.initialized = true;
 
-    this.logger.log(`OCR worker pool initialized with ${size} workers`);
+    this.logger.log(
+      `OCR worker pool initialized: ${this.workers.length} ready, ${this.failedWorkers} failed`,
+    );
+  }
+
+  /** Health status for monitoring / health checks (#568). */
+  getHealthStatus(): OcrHealthStatus {
+    return {
+      total: this.totalConfigured,
+      available: this.available.length,
+      failed: this.failedWorkers,
+    };
   }
 
   /**

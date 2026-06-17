@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bull';
+import { OcrWorkerPool } from './ocr-worker.pool';
 import { OcrService } from './ocr.service';
 import { OcrQueueService } from './ocr-queue.service';
 import { OcrProcessor } from './ocr.processor';
@@ -26,11 +27,12 @@ import { OcrJob } from './entities/ocr-job.entity';
   ],
   controllers: [OcrController],
   providers: [
+    OcrWorkerPool,
     OcrService,
     OcrQueueService,
     OcrProcessor,
     ReceiptParser,
   ],
-  exports: [OcrService, OcrQueueService],
+  exports: [OcrWorkerPool, OcrService, OcrQueueService],
 })
 export class OcrModule {}
