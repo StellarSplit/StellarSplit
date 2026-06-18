@@ -52,7 +52,7 @@ mod failing_receiver {
 
     #[contractimpl]
     impl FailingReceiverContract {
-        pub fn on_loan(env: Env, _loan_id: String, amount: i128, _fee: i128, _data: Bytes) {
+        pub fn on_loan(env: Env, _loan_id: String, amount: i128, fee: i128, _data: Bytes) {
             let token_address = env
                 .storage()
                 .instance()
@@ -82,7 +82,45 @@ mod failing_receiver {
     }
 }
 
+mod fee_only_receiver {
+    use soroban_sdk::{contract, contractimpl, symbol_short, token, Address, Bytes, Env, String};
+
+    #[contract]
+    pub struct FeeOnlyReceiverContract;
+
+    #[contractimpl]
+    impl FeeOnlyReceiverContract {
+        pub fn on_loan(env: Env, _loan_id: String, _amount: i128, fee: i128, _data: Bytes) {
+            let token_address = env
+                .storage()
+                .instance()
+                .get::<_, Address>(&symbol_short!("tok_addr"))
+                .unwrap();
+            let token_client = token::Client::new(&env, &token_address);
+            let flash_loan_address = env
+                .storage()
+                .instance()
+                .get::<_, Address>(&symbol_short!("fl_addr"))
+                .unwrap();
+            token_client.transfer(
+                &env.current_contract_address(),
+                &flash_loan_address,
+                &fee,
+            );
+        }
+        pub fn set_flash_loan(env: Env, addr: Address, token: Address) {
+            env.storage()
+                .instance()
+                .set(&symbol_short!("fl_addr"), &addr);
+            env.storage()
+                .instance()
+                .set(&symbol_short!("tok_addr"), &token);
+        }
+    }
+}
+
 use failing_receiver::{FailingReceiverContract, FailingReceiverContractClient};
+use fee_only_receiver::{FeeOnlyReceiverContract, FeeOnlyReceiverContractClient};
 use receiver::{ReceiverContract, ReceiverContractClient};
 
 #[test]
@@ -148,6 +186,34 @@ fn test_flash_loan_insufficient_repayment() {
     token_admin_client.mint(&flash_loan_id, &1000000);
 
     // This should fail because fee is not paid
+    let result = flash_loan_client.try_flash_loan(&receiver_id, &100000, &Bytes::new(&env));
+
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_fee_only_repayment_rejected() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let admin = Address::generate(&env);
+
+    let token_admin = Address::generate(&env);
+    let token_id = env.register_stellar_asset_contract_v2(token_admin.clone());
+    let token_address = token_id.address();
+    let token_admin_client = TokenAdminClient::new(&env, &token_address);
+
+    let flash_loan_id = env.register_contract(None, FlashLoanContract);
+    let flash_loan_client = FlashLoanContractClient::new(&env, &flash_loan_id);
+    flash_loan_client.initialize(&admin, &token_address, &50u32);
+
+    let receiver_id = env.register_contract(None, FeeOnlyReceiverContract);
+    let receiver_client = FeeOnlyReceiverContractClient::new(&env, &receiver_id);
+    receiver_client.set_flash_loan(&flash_loan_id, &token_address);
+
+    token_admin_client.mint(&flash_loan_id, &1000000);
+    token_admin_client.mint(&receiver_id, &5000);
+
     let result = flash_loan_client.try_flash_loan(&receiver_id, &100000, &Bytes::new(&env));
 
     assert!(result.is_err());

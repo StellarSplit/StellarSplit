@@ -8,6 +8,7 @@ pub enum Error {
     NotInitialized = 2,
     Unauthorized = 3,
     InsufficientFunds = 4,
+    InsufficientRepayment = 9,
     LoanNotFound = 5,
     LoanAlreadyRepaid = 6,
     FlashLoanCallbackFailed = 7,

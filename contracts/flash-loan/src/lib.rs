@@ -90,8 +90,14 @@ impl FlashLoanContract {
 
         // Check balance after
         let balance_after = token_client.balance(&contract_address);
-        if balance_after < balance_before + fee {
-            return Err(Error::InsufficientFunds);
+
+        if balance_after < balance_before {
+            return Err(Error::InsufficientRepayment);
+        }
+
+        let net_received = balance_after - (balance_before - amount);
+        if net_received < amount + fee {
+            return Err(Error::InsufficientRepayment);
         }
 
         // Cleanup
