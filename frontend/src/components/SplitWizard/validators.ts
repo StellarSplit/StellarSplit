@@ -19,11 +19,14 @@ export const validateParticipants = (
     t: (key: string) => string
 ): Errors => {
     const errors: Errors = {};
-    if (value.participants.length < 2)
-        errors.participants = t('wizard.validation.minParticipants');
+    if (value.participants.length < 1)
+        errors.participants = 'Add at least one participant';
 
     const hasUnnamed = value.participants.some((p) => !p.name.trim());
     if (hasUnnamed) errors.participants = t('wizard.validation.participantNameRequired');
+
+    const hasValidWallet = value.participants.some((p) => p.walletAddress && p.walletAddress.trim().length > 0);
+    if (!hasValidWallet) errors.participants = 'Add at least one participant with a valid wallet address';
 
     if (value.splitMethod === 'percentage') {
         const total = value.participants.reduce((acc, p) => acc + (p.percentage ?? 0), 0);
@@ -46,10 +49,13 @@ export const validateItems = (
 ): Errors => {
     const errors: Errors = {};
     if (value.items.length === 0)
-        errors.items = t('wizard.validation.minOneItem');
+        errors.items = 'Add at least one item';
 
     const hasUnnamed = value.items.some((i) => !i.name.trim());
     if (hasUnnamed) errors.items = t('wizard.validation.itemNameRequired');
+
+    const hasPositiveAmount = value.items.some((i) => i.price > 0);
+    if (!hasPositiveAmount) errors.items = 'Add at least one item with a positive amount';
 
     const hasZeroPrice = value.items.some((i) => i.price <= 0);
     if (hasZeroPrice) errors.items = t('wizard.validation.itemPriceRequired');
