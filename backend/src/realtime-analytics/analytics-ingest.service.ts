@@ -254,14 +254,14 @@ export class AnalyticsIngestService implements OnModuleInit, OnModuleDestroy {
   /**
    * Query analytics data from ClickHouse
    */
-  async queryAnalytics(sql: string): Promise<unknown> {
+  async queryAnalytics<T = unknown>(sql: string): Promise<T> {
     if (!this.features.clickhouse) {
       throw new Error('ClickHouse not available');
     }
 
     const clickhouse = this.getClickHouseClient();
     const result = await clickhouse.query(sql);
-    return result;
+    return result as T;
   }
 
   /**

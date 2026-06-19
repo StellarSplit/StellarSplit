@@ -59,7 +59,7 @@ export class AnalyticsController {
     const dateFrom = query.dateFrom ? new Date(query.dateFrom) : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const dateTo = query.dateTo ? new Date(query.dateTo) : new Date();
 
-    return this.analyticsIngest.queryAnalytics(
+    return this.analyticsIngest.queryAnalytics<MetricsResponseDto>(
       buildMetricsQuery({ dateFrom, dateTo, eventType: query.eventType }),
     );
   }
@@ -82,7 +82,7 @@ export class AnalyticsController {
     const dateFrom = query.dateFrom ? new Date(query.dateFrom) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const dateTo = query.dateTo ? new Date(query.dateTo) : new Date();
 
-    return this.analyticsIngest.queryAnalytics(
+    return this.analyticsIngest.queryAnalytics<FunnelResponseDto>(
       buildFunnelQuery({ eventTypes, dateFrom, dateTo }),
     );
   }
@@ -101,7 +101,7 @@ export class AnalyticsController {
     const startDate = query.startDate ? new Date(query.startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const periods = query.periods || 7;
 
-    return this.analyticsIngest.queryAnalytics(
+    return this.analyticsIngest.queryAnalytics<RetentionResponseDto>(
       buildRetentionQuery({ eventType, startDate, periods }),
     );
   }
@@ -122,7 +122,7 @@ export class AnalyticsController {
     const dateTo = query.dateTo ? new Date(query.dateTo) : new Date();
     const interval = query.interval || 'day';
 
-    return this.analyticsIngest.queryAnalytics(
+    return this.analyticsIngest.queryAnalytics<TrendsResponseDto>(
       buildTrendsQuery({ eventTypes, dateFrom, dateTo, interval: interval as TrendInterval }),
     );
   }
@@ -136,7 +136,7 @@ export class AnalyticsController {
   @ApiResponse({ status: HttpStatus.OK, description: 'Daily summary' })
   async getDailySummary(@Query('date') date?: string): Promise<MetricsResponseDto> {
     const targetDate = date ? new Date(date) : new Date();
-    return this.analyticsIngest.getDailyMetrics(targetDate);
+    return this.analyticsIngest.getDailyMetrics(targetDate) as Promise<MetricsResponseDto>;
   }
 
   // #465: Private query-builder methods replaced by the typed query-builder module.

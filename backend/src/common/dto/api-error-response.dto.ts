@@ -1,14 +1,11 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class ApiErrorResponseDto {
-  @ApiProperty({ example: 400 })
-  statusCode!: number;
+  @ApiPropertyOptional({ example: 400 })
+  statusCode?: number;
 
-  @ApiProperty({ example: '2026-03-26T19:45:00.000Z' })
-  timestamp!: string;
-
-  @ApiProperty({ example: '/api/export/create' })
-  path!: string;
+  @ApiPropertyOptional({ example: 'VALIDATION_ERROR' })
+  code?: string;
 
   @ApiProperty({
     description: 'Human-readable error details or structured validation payload',
@@ -27,6 +24,18 @@ export class ApiErrorResponseDto {
     ],
   })
   message!: string | string[] | Record<string, unknown>;
+
+  @ApiPropertyOptional({ example: '2026-03-26T19:45:00.000Z' })
+  timestamp?: string;
+
+  @ApiPropertyOptional({ example: '/api/export/create' })
+  path?: string;
+
+  @ApiPropertyOptional({ description: 'Optional correlation ID for tracing' })
+  correlationId?: string;
+
+  @ApiPropertyOptional({ description: 'Optional extra error context' })
+  details?: unknown;
 }
 
 export class UpdatedCountResponseDto {
@@ -37,12 +46,4 @@ export class UpdatedCountResponseDto {
 export class CountResponseDto {
   @ApiProperty({ example: 5 })
   count!: number;
-}
-
-
-export class ApiErrorResponseDto {
-  code: string;        // machine-readable code
-  message: string;     // human-readable message
-  correlationId?: string; // optional correlation ID for tracing
-  details?: any;       // optional extra context
 }

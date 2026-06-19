@@ -59,7 +59,7 @@ describe('UploadService', () => {
         }),
       };
 
-      expect(() => new UploadService(incompleteConfig)).toThrow(
+      expect(() => new UploadService(incompleteConfig as unknown as ConfigService)).toThrow(
         'Missing required S3 configuration'
       );
     });
@@ -80,7 +80,7 @@ describe('UploadService', () => {
         }),
       };
 
-      const customService = new UploadService(customConfig);
+      const customService = new UploadService(customConfig as unknown as ConfigService);
       expect(customService).toBeDefined();
     });
   });
@@ -215,10 +215,8 @@ describe('UploadService', () => {
         expect.anything(),
         expect.objectContaining({
           input: expect.objectContaining({
-            ResponseHeaders: expect.objectContaining({
-              'Cache-Control': expect.any(String),
-              'Content-Disposition': expect.any(String),
-            }),
+            ResponseCacheControl: expect.any(String),
+            ResponseContentDisposition: expect.any(String),
           }),
         }),
         expect.any(Object)

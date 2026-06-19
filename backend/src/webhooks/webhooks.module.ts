@@ -29,6 +29,6 @@ import { WebhookDelivery } from './webhook-delivery.entity';
   ],
   controllers: [WebhooksController],
   providers: [WebhooksService, WebhookDeliveryService, WebhookProcessor, TestWebhookDispatcher, WebhookRateLimitStore, WebhookPolicyService],
-  exports: [WebhooksService, WebhookDeliveryService, TestWebhookDispatcher, WebhookLimitStore, WebhookPolicyService],
+  exports: [WebhooksService, WebhookDeliveryService, TestWebhookDispatcher, WebhookRateLimitStore, WebhookPolicyService],
 })
 export class WebhooksModule {}

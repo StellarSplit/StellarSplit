@@ -14,17 +14,21 @@ export class UploadService implements OnModuleInit {
 
     constructor(private readonly configService: ConfigService) {
         this.validateS3Configuration();
-        
+
+        const region = this.configService.get<string>('AWS_REGION')!;
+        const accessKeyId = this.configService.get<string>('AWS_ACCESS_KEY_ID')!;
+        const secretAccessKey = this.configService.get<string>('AWS_SECRET_ACCESS_KEY')!;
+
         this.s3Client = new S3Client({
-            region: this.configService.get<string>('AWS_REGION'),
+            region,
             credentials: {
-                accessKeyId: this.configService.get<string>('AWS_ACCESS_KEY_ID'),
-                secretAccessKey: this.configService.get<string>('AWS_SECRET_ACCESS_KEY'),
+                accessKeyId,
+                secretAccessKey,
             },
             endpoint: this.configService.get<string>('S3_ENDPOINT'),
             forcePathStyle: true,
         });
-        this.bucketName = this.configService.get<string>('S3_BUCKET_NAME');
+        this.bucketName = this.configService.get<string>('S3_BUCKET_NAME')!;
         
         // Initialize policy validator
         const uploadPolicy = this.getUploadPolicy();
@@ -142,10 +146,12 @@ export class UploadService implements OnModuleInit {
             throw new BadRequestException('Invalid object key format');
         }
 
+        const headers = this.policyValidator.getDownloadHeaders();
         const command = new GetObjectCommand({
             Bucket: this.bucketName,
             Key: key,
-            ResponseHeaders: this.policyValidator.getDownloadHeaders()
+            ResponseCacheControl: headers['Cache-Control'],
+            ResponseContentDisposition: headers['Content-Disposition'],
         });
 
         const url = await getSignedUrl(this.s3Client, command, { 

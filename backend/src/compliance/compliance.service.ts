@@ -6,6 +6,7 @@ import { TaxExportRequest, ExportStatus, ExportFormat } from './entities/tax-exp
 import { Split } from '../entities/split.entity';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
+import { RequestExportDto } from './dto/request-export.dto';
 
 @Injectable()
 export class ComplianceService {

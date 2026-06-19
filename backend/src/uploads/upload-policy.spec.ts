@@ -24,10 +24,11 @@ describe('UploadPolicyValidator', () => {
     it('should include allowed types in error message', () => {
       try {
         validator.validateMimeType('text/plain');
-      } catch (error) {
-        expect(error.message).toContain('image/jpeg');
-        expect(error.message).toContain('image/png');
-        expect(error.message).toContain('application/pdf');
+      } catch (error: unknown) {
+        expect(error).toBeInstanceOf(BadRequestException);
+        expect((error as BadRequestException).message).toContain('image/jpeg');
+        expect((error as BadRequestException).message).toContain('image/png');
+        expect((error as BadRequestException).message).toContain('application/pdf');
       }
     });
   });
@@ -45,8 +46,9 @@ describe('UploadPolicyValidator', () => {
     it('should include size limit in error message', () => {
       try {
         validator.validateFileSize(DEFAULT_UPLOAD_POLICY.maxFileSize + 1);
-      } catch (error) {
-        expect(error.message).toContain(DEFAULT_UPLOAD_POLICY.maxFileSize.toString());
+      } catch (error: unknown) {
+        expect(error).toBeInstanceOf(BadRequestException);
+        expect((error as BadRequestException).message).toContain(DEFAULT_UPLOAD_POLICY.maxFileSize.toString());
       }
     });
   });
@@ -73,10 +75,11 @@ describe('UploadPolicyValidator', () => {
     it('should include allowed extensions in error message', () => {
       try {
         validator.validateFileExtension('test.exe');
-      } catch (error) {
-        expect(error.message).toContain('.jpg');
-        expect(error.message).toContain('.png');
-        expect(error.message).toContain('.pdf');
+      } catch (error: unknown) {
+        expect(error).toBeInstanceOf(BadRequestException);
+        expect((error as BadRequestException).message).toContain('.jpg');
+        expect((error as BadRequestException).message).toContain('.png');
+        expect((error as BadRequestException).message).toContain('.pdf');
       }
     });
   });

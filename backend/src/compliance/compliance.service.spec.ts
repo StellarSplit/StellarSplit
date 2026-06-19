@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ComplianceService } from './compliance.service';
-import { TaxExportRequest, ExportStatus } from './entities/tax-export-request.entity';
+import { TaxExportRequest, ExportStatus, ExportFormat } from './entities/tax-export-request.entity';
 import { ExpenseCategory } from './entities/expense-category.entity';
 import { Split } from '../entities/split.entity';
 import { getQueueToken } from '@nestjs/bull';
@@ -56,7 +56,7 @@ describe('ComplianceService', () => {
       const mockRequest = {
         id: 'test-id',
         userId: 'user-1',
-        exportFormat: 'CSV',
+        exportFormat: ExportFormat.CSV,
         periodStart: new Date('2023-01-01'),
         periodEnd: new Date('2023-12-31'),
         status: ExportStatus.QUEUED,
@@ -65,7 +65,7 @@ describe('ComplianceService', () => {
       jest.spyOn(exportRepo, 'save').mockResolvedValue(mockRequest as any);
 
       const result = await service.requestExport('user-1', {
-        exportFormat: 'CSV',
+        exportFormat: ExportFormat.CSV,
         periodStart: '2023-01-01',
         periodEnd: '2023-12-31',
       });
