@@ -44,4 +44,5 @@ pub enum DataKey {
     Dispute(String),
     DisputeList,
     VoterRecord(String, Address),
+    Admin, // <-- ADDED: stores the contract admin address
 }

@@ -69,6 +69,9 @@ fn setup() -> (
     let dispute_id = env.register_contract(None, DisputeContract);
     let dispute_client = DisputeContractClient::new(&env, &dispute_id);
 
+    // ADDED: initialize the dispute contract with the admin
+    dispute_client.initialize(&admin);
+
     (
         env,
         dispute_client,
@@ -452,4 +455,36 @@ fn test_only_escrow_creator_can_resolve() {
 
     // Sanity: expected error variant should be preserved in host result.
     let _ = Error::UnauthorizedResolver;
+}
+
+// ADDED: new test — admin must not be allowed to vote
+#[test]
+fn test_admin_cannot_vote() {
+    let (
+        env,
+        client,
+        _escrow,
+        escrow_contract,
+        _token_client,
+        _creator,
+        _participant,
+        _treasury,
+        escrow_split_id,
+        admin,  // <-- we use admin this time, not _admin
+    ) = setup();
+    env.ledger().with_mut(|l| l.timestamp = 1000);
+
+    let raiser = Address::generate(&env);
+
+    let id = client.raise_dispute(
+        &String::from_str(&env, "split_011"),
+        &raiser,
+        &String::from_str(&env, "Admin conflict of interest test"),
+        &escrow_contract,
+        &escrow_split_id,
+    );
+
+    // Admin tries to vote — must be rejected
+    let res = client.try_vote_on_dispute(&id, &admin, &true);
+    assert!(matches!(res, Err(Ok(Error::NotAuthorized))));
 }

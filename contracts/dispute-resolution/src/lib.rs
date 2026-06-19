@@ -20,11 +20,8 @@ const MAX_SPLIT_ID_BYTES: usize = 64;
 
 fn generate_dispute_id(env: &Env, split_id: &String) -> String {
     let split_len = split_id.len() as usize;
-    // Dispute IDs include split_id bytes; keep it bounded to avoid
-    // allocating unbounded buffers in `no_std`.
     assert!(split_len <= MAX_SPLIT_ID_BYTES);
 
-    // Convert Soroban `String` into a `Bytes` blob for hashing.
     let mut split_buf = [0u8; MAX_SPLIT_ID_BYTES];
     split_id.copy_into_slice(&mut split_buf[..split_len]);
     let split_bytes = Bytes::from_slice(env, &split_buf[..split_len]);
@@ -38,7 +35,6 @@ fn generate_dispute_id(env: &Env, split_id: &String) -> String {
     let mut id_bytes = Bytes::from_slice(env, b"dis_");
     id_bytes.append(&Bytes::from_slice(env, hash_bytes));
 
-    // `String::from_bytes` expects a byte slice; convert via a fixed buffer.
     let id_buf = id_bytes.to_buffer::<32>();
     String::from_bytes(env, id_buf.as_slice())
 }
@@ -48,6 +44,15 @@ pub struct DisputeContract;
 
 #[contractimpl]
 impl DisputeContract {
+    /// Set the contract admin. Must be called once after deployment.
+    pub fn initialize(env: Env, admin: Address) -> Result<(), Error> {
+        if storage::has_admin(&env) {
+            return Err(Error::AlreadyExists);
+        }
+        storage::set_admin(&env, &admin);
+        Ok(())
+    }
+
     /// Raise a new dispute against a split.
     pub fn raise_dispute(
         env: Env,
@@ -99,6 +104,12 @@ impl DisputeContract {
     ) -> Result<(), Error> {
         voter.require_auth();
 
+        // FIX 1: Admin must never vote — prevents conflict of interest
+        let admin = storage::get_admin(&env);
+        if voter == admin {
+            return Err(Error::NotAuthorized);
+        }
+
         let mut dispute = storage::get_dispute(&env, &dispute_id)?;
 
         // Must be in Voting status
@@ -118,15 +129,17 @@ impl DisputeContract {
             return Err(Error::AlreadyVoted);
         }
 
-        // Record the vote
+        // FIX 2: Record voter BEFORE counting the vote (makes duplicate guard atomic)
+        dispute.voters.push_back(voter.clone());
+        storage::record_vote(&env, &dispute_id, &voter);
+
+        // Now count the vote
         if support {
             dispute.votes_for += 1;
         } else {
             dispute.votes_against += 1;
         }
 
-        dispute.voters.push_back(voter.clone());
-        storage::record_vote(&env, &dispute_id, &voter);
         storage::save_dispute(&env, &dispute);
 
         events::emit_vote_cast(&env, &dispute_id, &voter, support);
