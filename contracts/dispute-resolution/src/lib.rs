@@ -190,7 +190,12 @@ impl DisputeContract {
 
         // Drive the next step in the payment lifecycle via the action adapter.
         let action = adapt_outcome(result)?;
-        execute_action(&env, action, &dispute.escrow_contract, dispute.escrow_split_id);
+        execute_action(
+            &env,
+            action,
+            &dispute.escrow_contract,
+            dispute.escrow_split_id,
+        );
 
         let result_code = match result {
             DisputeResult::UpheldForRaiser => 0u32,

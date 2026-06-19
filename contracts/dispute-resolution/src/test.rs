@@ -470,7 +470,7 @@ fn test_admin_cannot_vote() {
         _participant,
         _treasury,
         escrow_split_id,
-        admin,  // <-- we use admin this time, not _admin
+        admin, // <-- we use admin this time, not _admin
     ) = setup();
     env.ledger().with_mut(|l| l.timestamp = 1000);
 

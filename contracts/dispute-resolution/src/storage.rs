@@ -54,9 +54,7 @@ pub fn record_vote(env: &Env, dispute_id: &String, voter: &Address) {
 // --- Admin storage (new) ---
 
 pub fn set_admin(env: &Env, admin: &Address) {
-    env.storage()
-        .instance()
-        .set(&DataKey::Admin, admin);
+    env.storage().instance().set(&DataKey::Admin, admin);
 }
 
 pub fn get_admin(env: &Env) -> Address {
@@ -67,7 +65,5 @@ pub fn get_admin(env: &Env) -> Address {
 }
 
 pub fn has_admin(env: &Env) -> bool {
-    env.storage()
-        .instance()
-        .has(&DataKey::Admin)
+    env.storage().instance().has(&DataKey::Admin)
 }
