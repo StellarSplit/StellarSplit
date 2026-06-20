@@ -1,7 +1,10 @@
 import { Injectable } from "@nestjs/common";
+import { StellarService } from "../stellar/stellar.service";
 
 @Injectable()
 export class StellarPayloadService {
+  constructor(private readonly stellarService: StellarService) {}
+
   /**
    * Generates a SEP-0007 compliant web+stellar URI
    * Format: web+stellar:pay?destination=GC...&amount=10&memo=...
@@ -12,6 +15,9 @@ export class StellarPayloadService {
     assetCode?: string;
     memo?: string;
   }): string {
+    // Ensure transaction generation uses the currently configured Stellar network
+    this.stellarService.getNetworkPassphrase();
+
     const baseUrl = "web+stellar:pay";
     const query = new URLSearchParams({
       destination: params.destination,

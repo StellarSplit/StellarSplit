@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Horizon } from '@stellar/stellar-sdk';
+import { ConfigService } from '@nestjs/config';
+import { Horizon, Networks } from '@stellar/stellar-sdk';
 import { HorizonApi } from '@stellar/stellar-sdk/lib/horizon/horizon_api';
 
 @Injectable()
@@ -7,13 +8,14 @@ export class StellarService {
   private readonly logger = new Logger(StellarService.name);
   private readonly horizonServer: Horizon.Server;
 
-  constructor() {
-    // Using testnet for development; in production, this should be configurable
-    this.horizonServer = new Horizon.Server(
-      process.env.STELLAR_NETWORK === 'mainnet'
+  constructor(private readonly configService: ConfigService) {
+    const horizonUrl =
+      this.configService.get<string>('STELLAR_HORIZON_URL') ||
+      (this.configService.get<string>('STELLAR_NETWORK') === 'mainnet'
         ? 'https://horizon.stellar.org'
-        : 'https://horizon-testnet.stellar.org'
-    );
+        : 'https://horizon-testnet.stellar.org');
+
+    this.horizonServer = new Horizon.Server(horizonUrl);
   }
 
   /**
@@ -161,6 +163,15 @@ export class StellarService {
       this.logger.error(`Error verifying transaction ${txHash}:`, error);
       return null;
     }
+  }
+
+  getNetworkPassphrase(): string {
+    return (
+      this.configService.get<string>('STELLAR_NETWORK_PASSPHRASE') ||
+      (this.configService.get<string>('NODE_ENV') === 'production'
+        ? Networks.PUBLIC
+        : Networks.TESTNET)
+    );
   }
 
   /**

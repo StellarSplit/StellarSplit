@@ -30,48 +30,56 @@ export class SettlementService {
     txHash: string,
     userWallet: string,
   ) {
-    const step = await this.stepRepo.findOne({
-      where: { id: stepId, fromAddress: userWallet },
-      relations: ["suggestion"],
-    });
+    try {
+      const step = await this.stepRepo.findOne({
+        where: { id: stepId, fromAddress: userWallet },
+        relations: ["suggestion"],
+      });
 
-    if (!step) {
-      throw new NotFoundException("Settlement step not found");
-    }
+      if (!step) {
+        throw new NotFoundException("Settlement step not found");
+      }
 
-    if (step.status === StepStatus.COMPLETED) {
-      return step;
-    }
+      if (step.status === StepStatus.COMPLETED) {
+        return step;
+      }
 
-    const verification = await this.stellarService.verifyTransaction(txHash);
-    if (!verification || !verification.valid) {
-      throw new BadRequestException(
-        "Transaction could not be verified on-chain",
+      const verification = await this.stellarService.verifyTransaction(txHash);
+      if (!verification || !verification.valid) {
+        throw new BadRequestException(
+          "Transaction could not be verified on-chain",
+        );
+      }
+
+      const isMatch =
+        verification.sender === userWallet &&
+        verification.receiver === step.toAddress &&
+        verification.amount >= Number(step.amount);
+
+      if (!isMatch) {
+        throw new BadRequestException(
+          "Transaction details do not match the settlement step",
+        );
+      }
+
+      step.status = StepStatus.COMPLETED;
+
+      await this.participantRepo.update(
+        { splitId: step.relatedSplitIds[0], walletAddress: userWallet },
+        {
+          status: "paid",
+          amountPaid: () => `amount_paid + ${verification.amount}`,
+        },
       );
-    }
 
-    const isMatch =
-      verification.sender === userWallet &&
-      verification.receiver === step.toAddress &&
-      verification.amount >= Number(step.amount);
-
-    if (!isMatch) {
-      throw new BadRequestException(
-        "Transaction details do not match the settlement step",
+      return this.stepRepo.save(step);
+    } catch (error: any) {
+      this.logger.error(
+        `Error completing settlement step ${stepId} for wallet ${userWallet}: ${error?.message || error}`,
+        error,
       );
+      throw error;
     }
-
-    step.status = StepStatus.COMPLETED;
-
-    await this.participantRepo.update(
-      { splitId: step.relatedSplitIds[0], walletAddress: userWallet },
-      {
-        status: "paid",
-        amountPaid: () => `amount_paid + ${verification.amount}`,
-      },
-    );
-
-    return this.stepRepo.save(step);
   }
 
   async calculateNetPosition(walletAddress: string) {
