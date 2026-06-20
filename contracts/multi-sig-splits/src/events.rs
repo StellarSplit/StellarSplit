@@ -100,7 +100,12 @@ pub fn emit_execution_intent_recorded(
     recorded_at: u64,
 ) {
     env.events().publish(
-        ("execution_intent_recorded", "split_id", "action", "recorded_at"),
+        (
+            "execution_intent_recorded",
+            "split_id",
+            "action",
+            "recorded_at",
+        ),
         (split_id.clone(), action.clone(), recorded_at),
     );
 }

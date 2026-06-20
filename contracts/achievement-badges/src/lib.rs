@@ -167,7 +167,11 @@ impl AchievementBadgesContract {
 
         let mut badges: Vec<BadgeOwnershipInfo> = Vec::new(&env);
         for user_badge in &user_badges {
-            badges.push_back(BadgeOwnershipInfo::from_user_badge(&env, user.clone(), user_badge));
+            badges.push_back(BadgeOwnershipInfo::from_user_badge(
+                &env,
+                user.clone(),
+                user_badge,
+            ));
         }
 
         UserBadgeCollection {

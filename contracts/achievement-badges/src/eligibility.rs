@@ -4,7 +4,7 @@
 //! with real achievement evidence rather than mock assumptions.
 
 use crate::types::*;
-use soroban_sdk::{contracttype};
+use soroban_sdk::contracttype;
 
 /// Real achievement evidence for eligibility evaluation
 #[contracttype]
@@ -88,7 +88,7 @@ pub fn evaluate_group_leader(evidence: &AchievementEvidence) -> EligibilityResul
 /// This is the main entry point for eligibility evaluation. It takes explicit
 /// achievement evidence and evaluates whether the user meets the criteria for
 /// a specific badge type.
-/// 
+///
 /// The evaluation is deterministic and based purely on the evidence data,
 /// not on mock assumptions. Real achievement evidence must be provided
 /// to back the minting decision.

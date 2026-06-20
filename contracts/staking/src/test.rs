@@ -29,7 +29,14 @@ fn test_staking_success() {
     let staking_id = env.register_contract(None, StakingContract);
     let staking_client = StakingContractClient::new(&env, &staking_id);
     staking_client.initialize(&admin, &token_address);
-    assert_event_emitted(&env, (soroban_sdk::symbol_short!("staking"), soroban_sdk::symbol_short!("init")), (&admin, &token_address));
+    assert_event_emitted(
+        &env,
+        (
+            soroban_sdk::symbol_short!("staking"),
+            soroban_sdk::symbol_short!("init"),
+        ),
+        (&admin, &token_address),
+    );
 
     // Mint tokens
     token_admin_client.mint(&staker, &1000);

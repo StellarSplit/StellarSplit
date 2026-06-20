@@ -9,10 +9,10 @@ use soroban_sdk::{
     contract, contractimpl, symbol_short, token, Address, Env, IntoVal, String, Symbol, Vec,
 };
 
+mod error_map;
 mod events;
 mod storage;
 mod types;
-mod error_map;
 
 #[cfg(test)]
 mod test;

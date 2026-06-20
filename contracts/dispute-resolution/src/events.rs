@@ -4,12 +4,7 @@ use soroban_sdk::{symbol_short, Address, Env, String};
 ///
 /// Topics : ("dispute", "raised")
 /// Data   : (dispute_id, split_id, raiser)
-pub fn emit_dispute_raised(
-    env: &Env,
-    dispute_id: &String,
-    split_id: &String,
-    raiser: &Address,
-) {
+pub fn emit_dispute_raised(env: &Env, dispute_id: &String, split_id: &String, raiser: &Address) {
     env.events().publish(
         (symbol_short!("dispute"), symbol_short!("raised")),
         (dispute_id.clone(), split_id.clone(), raiser.clone()),

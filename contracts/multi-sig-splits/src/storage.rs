@@ -241,11 +241,7 @@ fn intent_key(split_id: &String) -> (Symbol, String) {
 
 /// Record an execution intent for a split.
 /// Creates a new internal action record that tracks what action will be executed.
-pub fn record_execution_intent(
-    env: &Env,
-    split_id: &String,
-    action: &String,
-) -> ExecutionIntent {
+pub fn record_execution_intent(env: &Env, split_id: &String, action: &String) -> ExecutionIntent {
     let now = env.ledger().timestamp();
     let intent = ExecutionIntent {
         intent_id: split_id.clone(),

@@ -232,8 +232,13 @@ impl SplitTemplateContract {
     ///
     /// # Returns
     /// The template if found, or an error
-    pub fn get_template_by_name(env: Env, creator: Address, name: String) -> Result<Template, Error> {
-        let template_id = name_index::get_template_id_by_name(&env, &creator, &name).ok_or(Error::TemplateNotFound)?;
+    pub fn get_template_by_name(
+        env: Env,
+        creator: Address,
+        name: String,
+    ) -> Result<Template, Error> {
+        let template_id = name_index::get_template_id_by_name(&env, &creator, &name)
+            .ok_or(Error::TemplateNotFound)?;
         storage::get_template(&env, &template_id).ok_or(Error::TemplateNotFound)
     }
 

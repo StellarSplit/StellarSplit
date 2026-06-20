@@ -102,11 +102,7 @@ mod fee_only_receiver {
                 .instance()
                 .get::<_, Address>(&symbol_short!("fl_addr"))
                 .unwrap();
-            token_client.transfer(
-                &env.current_contract_address(),
-                &flash_loan_address,
-                &fee,
-            );
+            token_client.transfer(&env.current_contract_address(), &flash_loan_address, &fee);
         }
         pub fn set_flash_loan(env: Env, addr: Address, token: Address) {
             env.storage()

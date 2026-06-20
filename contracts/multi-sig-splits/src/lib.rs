@@ -165,7 +165,7 @@ impl MultisigSplitsContract {
         // Record execution intent with clear action description
         let action = String::from_slice(&env, "Execute multi-sig split");
         let intent = storage::record_execution_intent(&env, &split_id, &action);
-        
+
         // Emit event about intent recording
         events::emit_execution_intent_recorded(&env, &split_id, &action, intent.recorded_at);
 

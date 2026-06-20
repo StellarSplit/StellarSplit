@@ -1,7 +1,7 @@
 //! Event assertion utilities for staking contract tests.
 
-use soroban_sdk::{Address, Env, Symbol, Val, Vec};
 use crate::types::Error;
+use soroban_sdk::{Address, Env, Symbol, Val, Vec};
 
 /// Assert that an event was emitted with the expected topic and data.
 pub fn assert_event_emitted(
@@ -30,16 +30,15 @@ pub fn assert_event_emitted(
         false
     });
 
-    assert!(found, "Expected event not found: topic={:?}, data={:?}", expected_topic, expected_data_val);
+    assert!(
+        found,
+        "Expected event not found: topic={:?}, data={:?}",
+        expected_topic, expected_data_val
+    );
 }
 
 /// Assert that a staking event was emitted for the given action.
-pub fn assert_staking_event(
-    env: &Env,
-    action: &str,
-    staker: &Address,
-    amount: i128,
-) {
+pub fn assert_staking_event(env: &Env, action: &str, staker: &Address, amount: i128) {
     let topic = (
         soroban_sdk::symbol_short!("staking"),
         soroban_sdk::symbol_short!(action),
@@ -48,11 +47,7 @@ pub fn assert_staking_event(
 }
 
 /// Assert that a delegation event was emitted.
-pub fn assert_delegation_event(
-    env: &Env,
-    delegator: &Address,
-    delegatee: &Option<Address>,
-) {
+pub fn assert_delegation_event(env: &Env, delegator: &Address, delegatee: &Option<Address>) {
     let topic = (
         soroban_sdk::symbol_short!("staking"),
         soroban_sdk::symbol_short!("delegate"),
@@ -61,12 +56,7 @@ pub fn assert_delegation_event(
 }
 
 /// Assert that an unstake event was emitted with unlock time.
-pub fn assert_unstake_event(
-    env: &Env,
-    staker: &Address,
-    amount: i128,
-    unlock_time: u64,
-) {
+pub fn assert_unstake_event(env: &Env, staker: &Address, amount: i128, unlock_time: u64) {
     let topic = (
         soroban_sdk::symbol_short!("staking"),
         soroban_sdk::symbol_short!("unstake"),
@@ -75,11 +65,7 @@ pub fn assert_unstake_event(
 }
 
 /// Assert that a reward deposit event was emitted.
-pub fn assert_reward_deposit_event(
-    env: &Env,
-    admin: &Address,
-    amount: i128,
-) {
+pub fn assert_reward_deposit_event(env: &Env, admin: &Address, amount: i128) {
     let topic = (
         soroban_sdk::symbol_short!("staking"),
         soroban_sdk::symbol_short!("deposit"),

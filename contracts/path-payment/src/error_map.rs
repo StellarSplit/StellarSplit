@@ -1,7 +1,7 @@
 //! Error mapping utilities for path-payment contract.
 
-use soroban_sdk::String;
 use crate::types::Error;
+use soroban_sdk::String;
 
 /// Convert an error to a human-readable string for debugging/logging.
 pub fn error_to_string(env: &soroban_sdk::Env, error: Error) -> String {
