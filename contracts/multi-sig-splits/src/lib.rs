@@ -57,7 +57,7 @@ impl MultisigSplitsContract {
         }
 
         if time_lock == 0 {
-            return Err(MultisigError::InvalidThreshold);
+            return Err(MultisigError::InvalidTimeLock);
         }
 
         // Check if split already exists

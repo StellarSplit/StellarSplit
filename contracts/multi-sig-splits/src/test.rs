@@ -2,7 +2,7 @@
 
 extern crate std;
 
-use crate::{MultisigSplitsContract, MultisigSplitsContractClient, MultisigStatus};
+use crate::{MultisigError, MultisigSplitsContract, MultisigSplitsContractClient, MultisigStatus};
 use soroban_sdk::{
     testutils::{Address as _, Ledger as _},
     Address, Env, String,
@@ -79,6 +79,27 @@ fn test_invalid_threshold() {
     // Try to create with 0 time lock
     // let result = client.create_multisig_split(&split_id, &2, &0);
     // assert!(result.is_err());
+}
+
+#[test]
+fn test_create_split_zero_timelock() {
+    let (env, admin, client) = setup_test();
+    let split_id = String::from_str(&env, "split-001");
+
+    client.initialize(&admin);
+
+    // A zero time lock is distinct from a zero threshold: it must report
+    // InvalidTimeLock, not InvalidThreshold.
+    assert_eq!(
+        client.try_create_multisig_split(&split_id, &2, &0),
+        Err(Ok(MultisigError::InvalidTimeLock))
+    );
+
+    // A zero threshold still reports InvalidThreshold.
+    assert_eq!(
+        client.try_create_multisig_split(&split_id, &0, &1800),
+        Err(Ok(MultisigError::InvalidThreshold))
+    );
 }
 
 #[test]

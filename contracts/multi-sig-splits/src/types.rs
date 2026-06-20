@@ -89,4 +89,5 @@ pub enum MultisigError {
     ThresholdTooHigh = 14,
     ThresholdTooLow = 15,
     InvalidSigner = 16,
+    InvalidTimeLock = 17,
 }
