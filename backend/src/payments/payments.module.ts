@@ -11,8 +11,8 @@ import { PaymentSettlementProcessor } from "./payment-settlement.processor";
 import { StellarModule } from "../stellar/stellar.module";
 import { forwardRef } from "@nestjs/common";
 import { PaymentGateway } from "../websocket/payment.gateway";
-import { WsJwtAuthService } from "../websocket/payment.gateway";
 import { WsPaymentAuthGuard } from "../websocket/payment.gateway";
+import { WsAuthModule } from "../ws-auth/ws-auth.module";
 import { Payment } from "../entities/payment.entity";
 import { Participant } from "../entities/participant.entity";
 import { Split } from "../entities/split.entity";
@@ -40,6 +40,7 @@ import { AuthorizationService } from "../auth/services/authorization.service";
     MultiCurrencyModule,
     AnalyticsModule,
     GatewayModule,
+    WsAuthModule,
     ReputationModule,
   ],
   controllers: [PaymentsController],
@@ -50,7 +51,6 @@ import { AuthorizationService } from "../auth/services/authorization.service";
     PaymentReconciliationProcessor,
     PaymentSettlementProcessor,
     PaymentGateway,
-    WsJwtAuthService,
     WsPaymentAuthGuard,
     AuthorizationService,
     IdempotencyService,
