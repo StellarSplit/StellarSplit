@@ -1,9 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
+import { INestApplication, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
+import { io } from 'socket.io-client';
+import { AddressInfo } from 'net';
 import { PaymentGateway, WsJwtAuthService, WsPaymentAuthGuard, buildCorsConfig } from './payment.gateway';
+import { SocketIoAdapter } from './socket-io.adapter';
 import { AuthorizationService } from '../auth/services/authorization.service';
-import { UnauthorizedException, BadRequestException } from '@nestjs/common';
 
 describe('PaymentGateway', () => {
   let gateway: PaymentGateway;
