@@ -3,9 +3,8 @@
 #[cfg(test)]
 mod tests {
     use soroban_sdk::{
-        testutils::Address as _,
-        testutils::Ledger as _,
-        Address, Env, String as SorobanString, Vec as SorobanVec,
+        testutils::Address as _, testutils::Ledger as _, Address, Env, String as SorobanString,
+        Vec as SorobanVec,
     };
 
     use crate::types::{Participant, SplitType};
@@ -75,7 +74,8 @@ mod tests {
         let name = SorobanString::from_str(&env, "Equal Split");
         let participants = create_equal_split_participants(&env, 3);
 
-        let template_id = client.create_template(&creator, &name, &SplitType::Equal, &participants, &None);
+        let template_id =
+            client.create_template(&creator, &name, &SplitType::Equal, &participants, &None);
 
         assert!(!template_id.is_empty());
     }
@@ -88,8 +88,13 @@ mod tests {
         let percentages = [50i128, 30, 20];
         let participants = create_percentage_split_participants(&env, &percentages);
 
-        let template_id =
-            client.create_template(&creator, &name, &SplitType::Percentage, &participants, &None);
+        let template_id = client.create_template(
+            &creator,
+            &name,
+            &SplitType::Percentage,
+            &participants,
+            &None,
+        );
 
         assert!(!template_id.is_empty());
     }
@@ -103,7 +108,13 @@ mod tests {
         let percentages = [50i128, 30, 15]; // Sum is 95, not 100
         let participants = create_percentage_split_participants(&env, &percentages);
 
-        let _ = client.create_template(&creator, &name, &SplitType::Percentage, &participants, &None);
+        let _ = client.create_template(
+            &creator,
+            &name,
+            &SplitType::Percentage,
+            &participants,
+            &None,
+        );
     }
 
     #[test]
@@ -115,7 +126,13 @@ mod tests {
         let percentages = [50i128, 60]; // 60 exceeds 100
         let participants = create_percentage_split_participants(&env, &percentages);
 
-        let _ = client.create_template(&creator, &name, &SplitType::Percentage, &participants, &None);
+        let _ = client.create_template(
+            &creator,
+            &name,
+            &SplitType::Percentage,
+            &participants,
+            &None,
+        );
     }
 
     #[test]
@@ -126,7 +143,8 @@ mod tests {
         let amounts = [100i128, 200, 300];
         let participants = create_fixed_split_participants(&env, &amounts);
 
-        let template_id = client.create_template(&creator, &name, &SplitType::Fixed, &participants, &None);
+        let template_id =
+            client.create_template(&creator, &name, &SplitType::Fixed, &participants, &None);
 
         assert!(!template_id.is_empty());
     }
@@ -195,8 +213,10 @@ mod tests {
         let participants2 = create_equal_split_participants(&env, 2);
 
         // Both calls at the same sequence (500_000 from setup); only name differs.
-        let id1 = client.create_template(&creator, &name1, &SplitType::Equal, &participants1, &None);
-        let id2 = client.create_template(&creator, &name2, &SplitType::Equal, &participants2, &None);
+        let id1 =
+            client.create_template(&creator, &name1, &SplitType::Equal, &participants1, &None);
+        let id2 =
+            client.create_template(&creator, &name2, &SplitType::Equal, &participants2, &None);
 
         // Different names should produce different IDs
         assert_ne!(id1, id2);
@@ -212,8 +232,10 @@ mod tests {
         let participants2 = create_equal_split_participants(&env, 2);
 
         // Both calls at the same sequence; only the creator differs.
-        let id1 = client.create_template(&creator1, &name, &SplitType::Equal, &participants1, &None);
-        let id2 = client.create_template(&creator2, &name, &SplitType::Equal, &participants2, &None);
+        let id1 =
+            client.create_template(&creator1, &name, &SplitType::Equal, &participants1, &None);
+        let id2 =
+            client.create_template(&creator2, &name, &SplitType::Equal, &participants2, &None);
 
         // Same name with different creators should produce different IDs
         assert_ne!(id1, id2);
@@ -260,8 +282,10 @@ mod tests {
         let name_b = SorobanString::from_str(&env, "Collision B");
         let participants = create_equal_split_participants(&env, 2);
 
-        let id1 = client.create_template(&creator, &name_a, &SplitType::Equal, &participants, &None);
-        let id2 = client.create_template(&creator, &name_b, &SplitType::Equal, &participants, &None);
+        let id1 =
+            client.create_template(&creator, &name_a, &SplitType::Equal, &participants, &None);
+        let id2 =
+            client.create_template(&creator, &name_b, &SplitType::Equal, &participants, &None);
 
         // Different names → different IDs
         assert_ne!(id1, id2);
@@ -273,13 +297,8 @@ mod tests {
         assert_eq!(t2.creator, creator);
 
         // Attempting to re-use name_a returns DuplicateName (via try_ variant)
-        let dup = client.try_create_template(
-            &creator,
-            &name_a,
-            &SplitType::Equal,
-            &participants,
-            &None,
-        );
+        let dup =
+            client.try_create_template(&creator, &name_a, &SplitType::Equal, &participants, &None);
         assert!(dup.is_err());
     }
 
@@ -293,7 +312,8 @@ mod tests {
         let participants2 = create_equal_split_participants(&env, 3);
 
         // Create first template (sequence already set to 500_000 in setup)
-        let _id1 = client.create_template(&creator, &name, &SplitType::Equal, &participants1, &None);
+        let _id1 =
+            client.create_template(&creator, &name, &SplitType::Equal, &participants1, &None);
 
         // Same name → DuplicateName → should panic
         let _ = client.create_template(&creator, &name, &SplitType::Equal, &participants2, &None);
@@ -307,7 +327,8 @@ mod tests {
         let participants = create_equal_split_participants(&env, 2);
 
         // Sequence is 500_000 from setup — no need to set it manually
-        let template_id = client.create_template(&creator, &name, &SplitType::Equal, &participants, &None);
+        let template_id =
+            client.create_template(&creator, &name, &SplitType::Equal, &participants, &None);
 
         // Verify ID is 64-character hex string
         assert_eq!(template_id.len(), 64);
@@ -328,7 +349,8 @@ mod tests {
         let name = SorobanString::from_str(&env, "Retrievable Template");
         let participants = create_equal_split_participants(&env, 3);
 
-        let template_id = client.create_template(&creator, &name, &SplitType::Equal, &participants, &None);
+        let template_id =
+            client.create_template(&creator, &name, &SplitType::Equal, &participants, &None);
 
         let template = client.get_template(&template_id);
         assert_eq!(template.id, template_id);
@@ -345,7 +367,8 @@ mod tests {
         let name = SorobanString::from_str(&env, "Named Template");
         let participants = create_equal_split_participants(&env, 2);
 
-        let template_id = client.create_template(&creator, &name, &SplitType::Equal, &participants, &None);
+        let template_id =
+            client.create_template(&creator, &name, &SplitType::Equal, &participants, &None);
 
         let template = client.get_template_by_name(&creator, &name);
         assert_eq!(template.id, template_id);
@@ -377,7 +400,13 @@ mod tests {
         // Create three templates
         client.create_template(&creator, &name1, &SplitType::Equal, &participants1, &None);
 
-        client.create_template(&creator, &name2, &SplitType::Percentage, &participants2, &None);
+        client.create_template(
+            &creator,
+            &name2,
+            &SplitType::Percentage,
+            &participants2,
+            &None,
+        );
 
         client.create_template(&creator, &name3, &SplitType::Fixed, &participants3, &None);
 
@@ -439,7 +468,8 @@ mod tests {
         let name = SorobanString::from_str(&env, "Usable Template");
         let participants = create_equal_split_participants(&env, 2);
 
-        let template_id = client.create_template(&creator, &name, &SplitType::Equal, &participants, &None);
+        let template_id =
+            client.create_template(&creator, &name, &SplitType::Equal, &participants, &None);
 
         let split_id = 1000u64;
         let _ = client.use_template(&template_id, &split_id);
@@ -463,7 +493,8 @@ mod tests {
         let name = SorobanString::from_str(&env, "Event Template");
         let participants = create_equal_split_participants(&env, 2);
 
-        let template_id = client.create_template(&creator, &name, &SplitType::Equal, &participants, &None);
+        let template_id =
+            client.create_template(&creator, &name, &SplitType::Equal, &participants, &None);
 
         let split_id = 1000u64;
 
@@ -535,7 +566,8 @@ mod tests {
         let name = SorobanString::from_str(&env, "Versioned Template");
         let participants = create_equal_split_participants(&env, 2);
 
-        let template_id = client.create_template(&creator, &name, &SplitType::Equal, &participants, &None);
+        let template_id =
+            client.create_template(&creator, &name, &SplitType::Equal, &participants, &None);
 
         let template = client.get_template(&template_id);
         assert_eq!(template.version, 1);
@@ -557,7 +589,8 @@ mod tests {
             participants.push_back(create_participant(&env, 1));
         }
 
-        let template_id = client.create_template(&creator, &name, &SplitType::Equal, &participants, &None);
+        let template_id =
+            client.create_template(&creator, &name, &SplitType::Equal, &participants, &None);
 
         let template = client.get_template(&template_id);
         assert_eq!(template.participants.len(), 100);
@@ -648,10 +681,7 @@ mod tests {
         // Third application must return TemplateLimitReached
         let result = client.try_apply_template(&template_id, &3u64);
         assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err(),
-            Ok(crate::Error::TemplateLimitReached)
-        );
+        assert_eq!(result.unwrap_err(), Ok(crate::Error::TemplateLimitReached));
     }
 
     #[test]
@@ -679,10 +709,7 @@ mod tests {
 
         let result = client.try_apply_template(&nonexistent_id, &1u64);
         assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err(),
-            Ok(crate::Error::TemplateNotFound)
-        );
+        assert_eq!(result.unwrap_err(), Ok(crate::Error::TemplateNotFound));
     }
 
     #[test]
@@ -703,9 +730,6 @@ mod tests {
 
         let result = client.try_apply_template(&template_id, &1u64);
         assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err(),
-            Ok(crate::Error::TemplateLimitReached)
-        );
+        assert_eq!(result.unwrap_err(), Ok(crate::Error::TemplateLimitReached));
     }
 }

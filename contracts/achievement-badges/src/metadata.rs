@@ -5,7 +5,7 @@
 //! a consistent contract API.
 
 use crate::types::*;
-use soroban_sdk::{Address, Env, String};
+use soroban_sdk::{contracttype, Address, Env, String, Vec};
 
 // ============================================================================
 // Token Semantics & Documentation
@@ -108,6 +108,7 @@ pub fn get_metadata_for_badge(env: &Env, badge_type: &BadgeType) -> BadgeMetadat
 // ============================================================================
 
 /// Complete ownership information for a specific badge
+#[contracttype]
 #[derive(Clone, Debug)]
 pub struct BadgeOwnershipInfo {
     /// The address that owns this badge
@@ -136,6 +137,7 @@ impl BadgeOwnershipInfo {
 }
 
 /// Collection summary for a user's badges
+#[contracttype]
 #[derive(Clone, Debug)]
 pub struct UserBadgeCollection {
     /// The user's address

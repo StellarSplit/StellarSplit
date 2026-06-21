@@ -4,7 +4,7 @@
 
 use crate::metadata;
 use crate::types::*;
-use soroban_sdk::{contracttype, symbol_short, Address, Env, String, Symbol, Vec};
+use soroban_sdk::{contracttype, symbol_short, Address, Env, Symbol, Vec};
 
 /// Storage keys
 const ADMIN: Symbol = symbol_short!("ADMIN");

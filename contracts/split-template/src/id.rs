@@ -30,13 +30,13 @@ pub fn generate_template_id(env: &Env, creator: &Address, name: &String) -> Stri
     // Create a hashable payload combining all uniqueness factors
     let mut payload = Bytes::new(env);
 
-    // Add creator address to payload
-    let creator_bytes = creator.to_bytes();
-    payload.extend_from_array(creator_bytes.as_slice());
+    // Add creator address to payload (XDR-serialized bytes)
+    let creator_bytes = creator.clone().to_xdr(env);
+    payload.append(&creator_bytes);
 
-    // Add name bytes to payload
-    let name_bytes = name.to_bytes();
-    payload.extend_from_array(name_bytes.as_slice());
+    // Add name bytes to payload (XDR-serialized bytes)
+    let name_bytes = name.clone().to_xdr(env);
+    payload.append(&name_bytes);
 
     // Add ledger sequence to payload (converted to bytes)
     let seq_bytes = ledger_seq.to_le_bytes();

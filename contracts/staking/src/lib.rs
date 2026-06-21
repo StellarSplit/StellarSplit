@@ -3,11 +3,12 @@
 use soroban_sdk::{contract, contractimpl, token, Address, Env};
 
 mod errors;
-mod event_assertions;
 mod events;
 mod storage;
 mod types;
 
+#[cfg(test)]
+mod event_assertions;
 #[cfg(test)]
 mod test;
 
