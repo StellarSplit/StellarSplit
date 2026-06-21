@@ -1,6 +1,9 @@
 //! # Tests for Achievement Badges Contract
 
-use crate::{AchievementBadgesContract, AchievementBadgesContractClient, BadgeType};
+use crate::{
+    AchievementBadgesContract, AchievementBadgesContractClient, AchievementEvidence, BadgeType,
+    EligibilityResult,
+};
 use soroban_sdk::{testutils::Address as _, Address, Env, String};
 
 /// Helper to create a test environment and contract client
@@ -21,9 +24,6 @@ fn test_initialize() {
     let (_env, admin, client) = setup_test();
 
     client.initialize(&admin);
-
-    // Verify admin is set (we'd need a getter for this)
-    // For now, just ensure it doesn't panic
 }
 
 #[test]
@@ -33,12 +33,74 @@ fn test_check_badge_eligibility() {
 
     client.initialize(&admin);
 
-    // Test eligibility for all badge types (should be true initially)
-    assert!(client.check_badge_eligibility(&user, &BadgeType::FirstSplitCreator));
-    assert!(client.check_badge_eligibility(&user, &BadgeType::HundredSplitsParticipated));
-    assert!(client.check_badge_eligibility(&user, &BadgeType::BigSpender));
-    assert!(client.check_badge_eligibility(&user, &BadgeType::FrequentSettler));
-    assert!(client.check_badge_eligibility(&user, &BadgeType::GroupLeader));
+    let evidence_creator = AchievementEvidence {
+        splits_created: 1,
+        splits_participated: 0,
+        total_amount_spent: 0,
+        settlements_completed: 0,
+        groups_managed: 0,
+    };
+    let evidence_century = AchievementEvidence {
+        splits_created: 0,
+        splits_participated: 100,
+        total_amount_spent: 0,
+        settlements_completed: 0,
+        groups_managed: 0,
+    };
+    let evidence_spender = AchievementEvidence {
+        splits_created: 0,
+        splits_participated: 0,
+        total_amount_spent: 1_000_000_000,
+        settlements_completed: 0,
+        groups_managed: 0,
+    };
+    let evidence_settler = AchievementEvidence {
+        splits_created: 0,
+        splits_participated: 0,
+        total_amount_spent: 0,
+        settlements_completed: 50,
+        groups_managed: 0,
+    };
+    let evidence_leader = AchievementEvidence {
+        splits_created: 0,
+        splits_participated: 0,
+        total_amount_spent: 0,
+        settlements_completed: 0,
+        groups_managed: 1,
+    };
+
+    assert_eq!(
+        client.check_eligibility_with_evidence(
+            &user,
+            &BadgeType::FirstSplitCreator,
+            &evidence_creator
+        ),
+        EligibilityResult::Eligible
+    );
+    assert_eq!(
+        client.check_eligibility_with_evidence(
+            &user,
+            &BadgeType::HundredSplitsParticipated,
+            &evidence_century
+        ),
+        EligibilityResult::Eligible
+    );
+    assert_eq!(
+        client.check_eligibility_with_evidence(&user, &BadgeType::BigSpender, &evidence_spender),
+        EligibilityResult::Eligible
+    );
+    assert_eq!(
+        client.check_eligibility_with_evidence(
+            &user,
+            &BadgeType::FrequentSettler,
+            &evidence_settler
+        ),
+        EligibilityResult::Eligible
+    );
+    assert_eq!(
+        client.check_eligibility_with_evidence(&user, &BadgeType::GroupLeader, &evidence_leader),
+        EligibilityResult::Eligible
+    );
 }
 
 #[test]
@@ -48,8 +110,16 @@ fn test_mint_badge() {
 
     client.initialize(&admin);
 
+    let evidence = AchievementEvidence {
+        splits_created: 1,
+        splits_participated: 0,
+        total_amount_spent: 0,
+        settlements_completed: 0,
+        groups_managed: 0,
+    };
+
     // Mint first badge
-    let token_id = client.mint_badge(&user, &BadgeType::FirstSplitCreator);
+    let token_id = client.mint_badge_with_evidence(&user, &BadgeType::FirstSplitCreator, &evidence);
     assert_eq!(token_id, 1u64);
 
     // Check that user now has the badge
@@ -69,11 +139,20 @@ fn test_no_duplicate_badges() {
 
     client.initialize(&admin);
 
+    let evidence = AchievementEvidence {
+        splits_created: 1,
+        splits_participated: 0,
+        total_amount_spent: 0,
+        settlements_completed: 0,
+        groups_managed: 0,
+    };
+
     // Mint a badge
-    client.mint_badge(&user, &BadgeType::FirstSplitCreator);
+    client.mint_badge_with_evidence(&user, &BadgeType::FirstSplitCreator, &evidence);
 
     // Try to mint the same badge again (should fail)
-    let result = client.try_mint_badge(&user, &BadgeType::FirstSplitCreator);
+    let result =
+        client.try_mint_badge_with_evidence(&user, &BadgeType::FirstSplitCreator, &evidence);
     assert!(result.is_err());
 }
 
@@ -84,10 +163,36 @@ fn test_multiple_badges_for_user() {
 
     client.initialize(&admin);
 
+    let evidence_creator = AchievementEvidence {
+        splits_created: 1,
+        splits_participated: 0,
+        total_amount_spent: 0,
+        settlements_completed: 0,
+        groups_managed: 0,
+    };
+    let evidence_century = AchievementEvidence {
+        splits_created: 0,
+        splits_participated: 100,
+        total_amount_spent: 0,
+        settlements_completed: 0,
+        groups_managed: 0,
+    };
+    let evidence_spender = AchievementEvidence {
+        splits_created: 0,
+        splits_participated: 0,
+        total_amount_spent: 1_000_000_000,
+        settlements_completed: 0,
+        groups_managed: 0,
+    };
+
     // Mint multiple different badges
-    client.mint_badge(&user, &BadgeType::FirstSplitCreator);
-    client.mint_badge(&user, &BadgeType::HundredSplitsParticipated);
-    client.mint_badge(&user, &BadgeType::BigSpender);
+    client.mint_badge_with_evidence(&user, &BadgeType::FirstSplitCreator, &evidence_creator);
+    client.mint_badge_with_evidence(
+        &user,
+        &BadgeType::HundredSplitsParticipated,
+        &evidence_century,
+    );
+    client.mint_badge_with_evidence(&user, &BadgeType::BigSpender, &evidence_spender);
 
     // Check that user has all three badges
     let user_badges = client.get_user_badges(&user);
@@ -126,7 +231,7 @@ fn test_badge_metadata() {
     assert_eq!(metadata.name, String::from_str(&env, "Big Spender"));
     assert_eq!(
         metadata.description,
-        String::from_str(&env, "Spent over 1000 XLM in splits")
+        String::from_str(&env, "Spent a significant amount in splits")
     );
     assert_eq!(metadata.badge_type, BadgeType::BigSpender);
 
@@ -134,7 +239,7 @@ fn test_badge_metadata() {
     assert_eq!(metadata.name, String::from_str(&env, "Frequent Settler"));
     assert_eq!(
         metadata.description,
-        String::from_str(&env, "Settled 50 splits as creator")
+        String::from_str(&env, "Completed 50 split settlements")
     );
     assert_eq!(metadata.badge_type, BadgeType::FrequentSettler);
 
@@ -142,7 +247,7 @@ fn test_badge_metadata() {
     assert_eq!(metadata.name, String::from_str(&env, "Group Leader"));
     assert_eq!(
         metadata.description,
-        String::from_str(&env, "Created 10 group splits")
+        String::from_str(&env, "Managing group splits")
     );
     assert_eq!(metadata.badge_type, BadgeType::GroupLeader);
 }
@@ -155,9 +260,17 @@ fn test_different_users_can_mint_same_badge() {
 
     client.initialize(&admin);
 
+    let evidence = AchievementEvidence {
+        splits_created: 1,
+        splits_participated: 0,
+        total_amount_spent: 0,
+        settlements_completed: 0,
+        groups_managed: 0,
+    };
+
     // Both users mint the same badge type
-    client.mint_badge(&user1, &BadgeType::FirstSplitCreator);
-    client.mint_badge(&user2, &BadgeType::FirstSplitCreator);
+    client.mint_badge_with_evidence(&user1, &BadgeType::FirstSplitCreator, &evidence);
+    client.mint_badge_with_evidence(&user2, &BadgeType::FirstSplitCreator, &evidence);
 
     // Check that both users have their own badges
     let user1_badges = client.get_user_badges(&user1);

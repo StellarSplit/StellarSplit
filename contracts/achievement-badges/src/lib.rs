@@ -49,7 +49,7 @@ impl AchievementBadgesContract {
     ///
     /// This function evaluates real achievement evidence against badge criteria.
     /// It takes explicit contract inputs to back the eligibility decision.
-    pub fn check_badge_eligibility_with_evidence(
+    pub fn check_eligibility_with_evidence(
         env: Env,
         user: Address,
         badge_type: BadgeType,
@@ -109,7 +109,7 @@ impl AchievementBadgesContract {
 
                 Ok(token_id)
             }
-            EligibilityResult::NotEligible(_) => Err(BadgeError::NotEligible),
+            EligibilityResult::NotEligible => Err(BadgeError::NotEligible),
         }
     }
 
@@ -150,7 +150,7 @@ impl AchievementBadgesContract {
         // Find the badge of the specified type
         for badge in &user_badges {
             if &badge.badge_type == &badge_type {
-                return Some(BadgeOwnershipInfo::from_user_badge(&env, user, badge));
+                return Some(BadgeOwnershipInfo::from_user_badge(&env, user, &badge));
             }
         }
 
@@ -170,7 +170,7 @@ impl AchievementBadgesContract {
             badges.push_back(BadgeOwnershipInfo::from_user_badge(
                 &env,
                 user.clone(),
-                user_badge,
+                &user_badge,
             ));
         }
 

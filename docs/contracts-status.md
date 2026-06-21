@@ -11,16 +11,16 @@ This document provides a single source of truth for the deployment readiness and
 | **path-payment** | Production | ✅ Yes | Automatic currency conversion | None. |
 | **split-template** | Production | ✅ Yes | Reusable split templates | None. Supports versioning. |
 | **staking** | Production | ✅ Yes | Staking, governance & rewards | None. Fully tested. |
-| **dispute-resolution** | Broken | ❌ No | On-chain dispute handling | Compilation errors. Mid-port to pinned Soroban toolchain. |
-| **split-escrow** | Broken | ❌ No | Trustless bill split escrow | **DO NOT INTEGRATE**. Compilation errors; draft/broken source. |
-| **multi-sig-splits** | Broken | ❌ No | Multi-signature coordination | `E0507` move error; needs ownership fix. |
-| **reminder** | Archived | ❌ No | On-chain payment reminders | Orphaned contract area. Incomplete structure. |
+| **dispute-resolution** | Production | ✅ Yes | On-chain dispute handling | None. Ready for integration. |
+| **split-escrow** | In Progress | ❌ No | Trustless bill split escrow | Excluded from workspace. Issues being resolved in a separate PR. |
+| **multi-sig-splits** | Broken | ❌ No | Multi-signature coordination | Excluded from workspace. Failing unit and proptests. |
+| **reminder** | Production | ✅ Yes | On-chain payment reminders | Ready for integration. |
 
 ## Integration Policy
 
 The frontend and backend **must only integrate with contracts marked as Production**. 
 
-Contracts listed as **Broken** (such as `split-escrow`) are currently undergoing heavy refactoring or toolchain upgrades and **cannot be deployed or interacted with** locally or on testnet. Attempts to compile the broken modules using `cargo build --workspace` will currently fail unless they are specifically excluded from the workspace (which they are in `Cargo.toml`).
+Contracts listed as **Broken** or **In Progress** (such as `split-escrow` and `multi-sig-splits`) are currently undergoing heavy refactoring or toolchain upgrades and **cannot be deployed or interacted with** locally or on testnet. Attempts to compile these modules using `cargo build --workspace` will currently fail unless they are specifically excluded from the workspace (which they are in `Cargo.toml`).
 
 ## Updating Status
 

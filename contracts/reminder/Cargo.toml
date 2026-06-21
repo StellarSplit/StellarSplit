@@ -1,9 +1,9 @@
 [package]
-name = "staking"
+name = "reminder"
 version = "0.1.0"
 edition = "2021"
 authors = ["StellarSplit Team"]
-description = "Soroban staking contract for governance and rewards"
+description = "Soroban reminder contract for StellarSplit"
 license = "MIT"
 repository = "https://github.com/OlufunbiIK/StellarSplit"
 
@@ -15,4 +15,3 @@ soroban-sdk = { workspace = true }
 
 [dev-dependencies]
 soroban-sdk = { workspace = true, features = ["testutils"] }
-proptest = "1"

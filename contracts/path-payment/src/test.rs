@@ -127,7 +127,7 @@ fn test_double_initialize_fails() {
     client.initialize(&admin);
     let res = client.try_initialize(&admin);
     assert!(res.is_err());
-    assert_eq!(res.err().unwrap(), Error::AlreadyInitialized);
+    assert_eq!(res.err().unwrap(), Ok(Error::AlreadyInitialized));
 }
 
 // ========== Path finding ==========
@@ -260,7 +260,7 @@ fn test_execute_path_payment_invalid_amount() {
     let split_id = String::from_str(&env, "split-1");
     let res = client.try_execute_path_payment(&caller, &split_id, &path, &0i128, &100u32);
     assert!(res.is_err());
-    assert_eq!(res.err().unwrap(), Error::InvalidAmount);
+    assert_eq!(res.err().unwrap(), Ok(Error::InvalidAmount));
 }
 
 #[test]
@@ -273,7 +273,7 @@ fn test_execute_path_payment_empty_path() {
     let split_id = String::from_str(&env, "split-1");
     let res = client.try_execute_path_payment(&caller, &split_id, &path, &100i128, &100u32);
     assert!(res.is_err());
-    assert_eq!(res.err().unwrap(), Error::InvalidPath);
+    assert_eq!(res.err().unwrap(), Ok(Error::InvalidPath));
 }
 
 // ========== Slippage (simulated with rates) ==========
@@ -291,7 +291,7 @@ fn test_execute_path_payment_path_too_long() {
     let split_id = String::from_str(&env, "split-long-path");
     let res = client.try_execute_path_payment(&caller, &split_id, &path, &100i128, &100u32);
     assert!(res.is_err());
-    assert_eq!(res.err().unwrap(), Error::InvalidPath);
+    assert_eq!(res.err().unwrap(), Ok(Error::InvalidPath));
 }
 
 // ========== Admin: set_swap_router ==========

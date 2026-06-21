@@ -1,7 +1,8 @@
 #![cfg(test)]
-mod event_assertions;
+extern crate std;
 
 use crate::event_assertions::*;
+use crate::Error;
 
 use crate::{StakingContract, StakingContractClient};
 use soroban_sdk::token::{Client as TokenClient, StellarAssetClient as TokenAdminClient};
@@ -134,7 +135,7 @@ fn test_deposit_rewards_unauthorized() {
     token_admin_client.mint(&wrong_admin, &1000);
     let res = staking_client.try_deposit_rewards(&wrong_admin, &100);
     assert!(res.is_err());
-    assert_eq!(res.err().unwrap(), Error::Unauthorized);
+    assert_eq!(res.err().unwrap(), Ok(Error::Unauthorized));
 }
 
 #[test]
@@ -153,7 +154,7 @@ fn test_double_initialize_fails() {
     // Try initialize again
     let res = staking_client.try_initialize(&admin, &token_address);
     assert!(res.is_err());
-    assert_eq!(res.err().unwrap(), Error::AlreadyInitialized);
+    assert_eq!(res.err().unwrap(), Ok(Error::AlreadyInitialized));
 }
 
 #[test]
