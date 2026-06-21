@@ -13,11 +13,12 @@ export default function Navbar({ onMenuOpen }: NavbarProps) {
         top: 0,
         zIndex: 30,
         width: "100%",
-        backgroundColor:
-          "color-mix(in srgb, var(--color-surface) 85%, transparent)",
+        backgroundColor: "color-mix(in srgb, var(--color-surface) 85%, transparent)",
         backdropFilter: "blur(12px)",
         WebkitBackdropFilter: "blur(12px)",
         borderBottom: "1px solid var(--color-border)",
+        /* Hardware Safe-Area Notch Guard padding-top layout update */
+        paddingTop: "var(--sat, env(safe-area-inset-top, 0px))",
       }}
     >
       {/* Accent top line */}
@@ -28,8 +29,7 @@ export default function Navbar({ onMenuOpen }: NavbarProps) {
           left: 0,
           right: 0,
           height: "2px",
-          background:
-            "linear-gradient(90deg, transparent, var(--color-accent), transparent)",
+          background: "linear-gradient(90deg, transparent, var(--color-accent), transparent)",
           opacity: 0.6,
         }}
       />
@@ -40,10 +40,10 @@ export default function Navbar({ onMenuOpen }: NavbarProps) {
           height: "3.5rem",
           display: "flex",
           alignItems: "center",
-          justifyContent: "space-between",
+          justify-content: "space-between",
         }}
       >
-        {/* ── Left: hamburger (mobile only) + brand ── */}
+        {/* ── Left: hamburger (mobile only) + brand asset image update ── */}
         <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
           {/* Hamburger — hidden on lg+ since sidebar is always visible there */}
           <button
@@ -59,7 +59,7 @@ export default function Navbar({ onMenuOpen }: NavbarProps) {
               borderRadius: "0.375rem",
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
+              justify-content: "center",
               transition: "color 0.15s, background-color 0.15s",
             }}
             onMouseEnter={(e) => {
@@ -88,19 +88,20 @@ export default function Navbar({ onMenuOpen }: NavbarProps) {
             </svg>
           </button>
 
-          {/* Brand — shown on mobile (sidebar is hidden), hidden on desktop */}
+          {/* Brand — Real logo asset integration replaces the placeholder SVG paths */}
           <div
             className="lg:hidden"
             style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <polygon
-                points="12,2 22,20 2,20"
-                stroke="var(--color-accent)"
-                strokeWidth="2"
-                fill="color-mix(in srgb, var(--color-accent) 15%, transparent)"
-              />
-            </svg>
+            <img
+              src="/stellarsplit-logo.png"
+              alt="StellarSplit Mobile Brand Logo"
+              style={{
+                height: "1.5rem",
+                width: "auto",
+                objectFit: "contain",
+              }}
+            />
             <span
               style={{
                 fontWeight: 700,
@@ -137,8 +138,7 @@ export default function Navbar({ onMenuOpen }: NavbarProps) {
               fontWeight: 600,
               fontSize: "0.875rem",
               cursor: "pointer",
-              boxShadow:
-                "0 0 12px color-mix(in srgb, var(--color-accent) 25%, transparent)",
+              boxShadow: "0 0 12px color-mix(in srgb, var(--color-accent) 25%, transparent)",
               transition: "opacity 0.2s, box-shadow 0.2s",
               whiteSpace: "nowrap",
             }}

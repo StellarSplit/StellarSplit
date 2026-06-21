@@ -1,9 +1,7 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
-}
+/* ============================================================
+   GLOBAL ROOT CLEANUP & OVERRIDES
+   Removed restrictive layout constraints and mis-centering properties.
+   ============================================================ */
 
 .logo {
   height: 6em;
@@ -11,11 +9,13 @@
   will-change: filter;
   transition: filter 300ms;
 }
+
 .logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+  filter: drop-shadow(0 0 2em rgba(108, 99, 255, 0.6));
 }
+
 .logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+  filter: drop-shadow(0 0 2em rgba(97, 218, 251, 0.6));
 }
 
 @keyframes logo-spin {
@@ -38,28 +38,32 @@
 }
 
 .read-the-docs {
-  color: #888;
+  color: var(--color-text-muted, #888);
 }
 
-/* ── Design tokens ──────────────────────────────────────────────────────────*/
+/* ============================================================
+   DESIGN TOKENS & RESPONSIVE GRID CONSTANTS
+   Linked directly with the unified brand design system tokens
+   ============================================================ */
 :root {
   --dash-pad-x:   clamp(0.75rem, 4vw, 1.5rem);
   --dash-pad-y:   clamp(1rem, 3vw, 1.5rem);
   --card-radius:  0.75rem;
   --card-gap:     clamp(0.75rem, 2.5vw, 1.5rem);
-  --touch-target: 2.75rem; /* 44px */
-  --color-accent: #3b82f6;
+  --touch-target: 2.75rem; /* 44px standard target size */
 }
 
-/* ── Root ───────────────────────────────────────────────────────────────────*/
+/* ============================================================
+   LAYOUT ENGINE SHELL
+   ============================================================ */
 .dashboard-root {
   padding:
-    calc(var(--dash-pad-y) + env(safe-area-inset-top))
-    calc(var(--dash-pad-x) + env(safe-area-inset-right))
-    calc(var(--dash-pad-y) + env(safe-area-inset-bottom))
-    calc(var(--dash-pad-x) + env(safe-area-inset-left));
+    calc(var(--dash-pad-y) + var(--sat, env(safe-area-inset-top)))
+    calc(var(--dash-pad-x) + var(--sar, env(safe-area-inset-right)))
+    calc(var(--dash-pad-y) + var(--sab, env(safe-area-inset-bottom)))
+    calc(var(--dash-pad-x) + var(--sal, env(safe-area-inset-left)));
   min-block-size: 100dvh;
-  background-color: var(--color-bg-theme, #f8fafc);
+  background-color: var(--color-bg, #f4f4f8);
 }
 
 .dashboard-inner {
@@ -67,7 +71,9 @@
   margin-inline: auto;
 }
 
-/* ── Header ─────────────────────────────────────────────────────────────────*/
+/* ============================================================
+   HEADER ROW SECTIONS
+   ============================================================ */
 .dashboard-header {
   display: flex;
   flex-direction: column;
@@ -110,16 +116,18 @@
   font-size: clamp(1.375rem, 5vw, 1.875rem);
   font-weight: 700;
   line-height: 1.2;
-  color: var(--color-text-theme, #0f172a);
+  color: var(--color-text, #1a1a2e);
 }
 
 .dashboard-subtitle {
   font-size: 0.875rem;
-  color: var(--color-muted-theme, #64748b);
+  color: var(--color-text-muted, #6b7280);
   margin-block-start: 0.125rem;
 }
 
-/* ── Controls row ───────────────────────────────────────────────────────────*/
+/* ============================================================
+   CONTROLS INTERFACE INTERACTIVE TRACKS
+   ============================================================ */
 .header-controls {
   display: flex;
   align-items: center;
@@ -133,7 +141,6 @@
   }
 }
 
-/* DateRangePicker stretches on mobile */
 .header-controls > :first-child {
   flex: 1;
 }
@@ -146,13 +153,14 @@
 
 .date-picker-placeholder {
   block-size: var(--touch-target);
-  background: var(--color-surface, #e2e8f0);
+  background: var(--color-surface, #ffffff);
+  border: 1px solid var(--color-border, #e5e7eb);
   border-radius: 0.5rem;
   flex: 1;
   animation: pulse 1.5s ease-in-out infinite;
 }
 
-/* ── Refresh button — 44×44 min touch target ────────────────────────────────*/
+/* ── Refresh button ── */
 .btn-refresh {
   display: inline-flex;
   align-items: center;
@@ -162,12 +170,12 @@
   min-inline-size: var(--touch-target);
   padding-inline: 0.75rem;
   border-radius: 0.5rem;
-  border: 1px solid var(--color-border-theme, #e2e8f0);
-  background: var(--color-surface, #f1f5f9);
-  color: var(--color-muted-theme, #64748b);
+  border: 1px solid var(--color-border, #e5e7eb);
+  background: var(--color-surface, #ffffff);
+  color: var(--color-text-muted, #6b7280);
   font-size: 0.875rem;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
   white-space: nowrap;
@@ -175,9 +183,9 @@
 
 .btn-refresh:hover,
 .btn-refresh:focus-visible {
-  background: var(--color-card-theme, #fff);
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
+  background: var(--color-bg, #f4f4f8);
+  border-color: var(--color-accent);
+  color: var(--color-text, #1a1a2e);
 }
 
 .btn-refresh:active {
@@ -190,7 +198,6 @@
   flex-shrink: 0;
 }
 
-/* Show text label on mobile, hide on larger screens */
 .btn-refresh__label {
   display: inline;
 }
@@ -201,7 +208,9 @@
   }
 }
 
-/* ── Charts grid ─────────────────────────────────────────────────────────────*/
+/* ============================================================
+   RESPONSIVE LAYOUT CHARTS LAYOUT PANELS
+   ============================================================ */
 .charts-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -214,12 +223,11 @@
   }
 }
 
-/* ── Cards ───────────────────────────────────────────────────────────────────*/
 .analytics-card {
-  background: var(--color-card-theme, #fff);
-  border: 1px solid var(--color-border-theme, #e2e8f0);
+  background: var(--color-card, #ffffff);
+  border: 1px solid var(--color-border, #e5e7eb);
   border-radius: var(--card-radius);
-  box-shadow: 0 1px 3px rgb(0 0 0 / 0.06);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   padding: clamp(1rem, 3vw, 1.5rem);
   overflow: hidden;
 }
@@ -235,7 +243,9 @@
   min-block-size: 2rem;
 }
 
-/* ── Heatmap scroll ──────────────────────────────────────────────────────────*/
+/* ============================================================
+   HEATMAP TOUCH-OVERFLOW CONTAINER SETUP
+   ============================================================ */
 .heatmap-scroll {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -259,16 +269,18 @@
 }
 
 .heatmap-scroll:focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 3px solid var(--color-accent);
   outline-offset: 2px;
   border-radius: 0.375rem;
 }
 
 .heatmap-scroll > * {
-  min-inline-size: 36rem; /* adjust to match PaymentHeatmap's actual min-width */
+  min-inline-size: 36rem;
 }
 
-/* ── Skeletons ───────────────────────────────────────────────────────────────*/
+/* ============================================================
+   SKELETON PLACEHOLDERS (CLS MITIGATION)
+   ============================================================ */
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50%       { opacity: 0.4; }
@@ -277,24 +289,26 @@
 .skeleton-label {
   block-size: 1rem;
   inline-size: 33%;
-  background: var(--color-surface, #e2e8f0);
+  background: var(--color-border, #e5e7eb);
   border-radius: 0.25rem;
   margin-block-end: 1rem;
   animation: pulse 1.5s ease-in-out infinite;
 }
 
 .skeleton-chart {
-  aspect-ratio: 16 / 7; /* reserves space → prevents CLS */
-  background: var(--color-bg-theme, #f1f5f9);
+  aspect-ratio: 16 / 7;
+  background: var(--color-bg, #f4f4f8);
   border-radius: 0.375rem;
   animation: pulse 1.5s ease-in-out infinite;
   animation-delay: 0.1s;
 }
 
-/* ── Error state ─────────────────────────────────────────────────────────────*/
+/* ============================================================
+   STATE RESPONSE MODALS & HANDLERS
+   ============================================================ */
 .error-card {
-  background: var(--color-card-theme, #fff);
-  border: 1px solid var(--color-border-theme, #e2e8f0);
+  background: var(--color-card, #ffffff);
+  border: 1px solid var(--color-border, #e5e7eb);
   border-radius: var(--card-radius);
   padding: clamp(1.5rem, 5vw, 2.5rem);
   text-align: center;
@@ -305,8 +319,9 @@
 }
 
 .error-message {
-  color: #ef4444;
+  color: var(--color-danger, #ef4444);
   font-size: 0.9375rem;
+  font-weight: 500;
 }
 
 .btn-retry {
@@ -319,27 +334,33 @@
   background: var(--color-accent);
   color: #fff;
   font-size: 0.9375rem;
-  font-weight: 500;
+  font-weight: 600;
   border: none;
   cursor: pointer;
   transition: background 0.15s ease, transform 0.1s ease;
   -webkit-tap-highlight-color: transparent;
 }
 
-.btn-retry:hover { background: #2563eb; }
+.btn-retry:hover {
+  background: var(--color-secondary, #5145e5);
+}
 
 .btn-retry:focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 3px solid var(--color-accent);
   outline-offset: 3px;
 }
 
-.btn-retry:active { transform: scale(0.97); }
+.btn-retry:active {
+  transform: scale(0.97);
+}
 
-/* ── Landscape phones ────────────────────────────────────────────────────────*/
+/* ============================================================
+   LANDSCAPE MOBILE PHONE CONSTRAINT OPTIMIZATIONS
+   ============================================================ */
 @media (max-width: 839px) and (orientation: landscape) {
   .dashboard-root {
-    padding-block: calc(0.5rem + env(safe-area-inset-top))
-                   calc(0.5rem + env(safe-area-inset-bottom));
+    padding-block: calc(0.5rem + var(--sat, env(safe-area-inset-top)))
+                   calc(0.5rem + var(--sab, env(safe-area-inset-bottom)));
   }
 
   .skeleton-chart {
@@ -347,7 +368,9 @@
   }
 }
 
-/* ── Reduced motion ──────────────────────────────────────────────────────────*/
+/* ============================================================
+   ACCESSIBILITY ACCELERATION: SYSTEM MOTION RESTRAINTS
+   ============================================================ */
 @media (prefers-reduced-motion: reduce) {
   .skeleton-label,
   .skeleton-chart,

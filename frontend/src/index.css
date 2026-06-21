@@ -9,6 +9,12 @@
   /* ── Drips-wave / Stellar-wave color palette ── */
   --color-primary: #6c63ff;
   --color-primary-dark: #8b85ff;
+  
+  --color-secondary-light: #5145e5;
+  --color-secondary-dark: #6366f1;
+
+  --color-success: #10b981;
+  --color-danger: #ef4444;
 
   --color-surface-light: #ffffff;
   --color-surface-dark: #0f1117;
@@ -45,7 +51,14 @@
   --color-text-muted: var(--color-muted-light);
   --color-border: var(--color-border-light);
   --color-accent: var(--color-primary);
+  --color-secondary: var(--color-secondary-light);
   --color-ring: rgba(108, 99, 255, 0.4);
+
+  /* Device Notch Padding Properties (Safe Area Insets) */
+  --sat: env(safe-area-inset-top, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
 }
 
 :root.dark {
@@ -56,6 +69,7 @@
   --color-text-muted: var(--color-muted-dark);
   --color-border: var(--color-border-dark);
   --color-accent: var(--color-primary-dark);
+  --color-secondary: var(--color-secondary-dark);
   --color-ring: rgba(139, 133, 255, 0.4);
 }
 
@@ -72,6 +86,9 @@ body {
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", sans-serif;
+  /* Protect layout continuity across horizontal physical notches */
+  padding-left: var(--sal);
+  padding-right: var(--sar);
 }
 
 /* ============================================================
@@ -175,8 +192,6 @@ textarea:focus-visible {
 /* ============================================================
    SMOOTH THEME TRANSITION
    Applied globally so every element transitions on theme switch.
-   The :not([data-no-transition]) escape hatch lets you opt out
-   on elements where the transition would look wrong (e.g. canvas).
    ============================================================ */
 
 *:not([data-no-transition]),
@@ -190,8 +205,6 @@ textarea:focus-visible {
 
 /* ============================================================
    SEMANTIC UTILITY CLASSES
-   Use these in your components instead of hardcoded Tailwind colors.
-   They automatically flip between light/dark via CSS variables above.
    ============================================================ */
 
 /* Backgrounds */
@@ -204,6 +217,9 @@ textarea:focus-visible {
 .bg-card-theme {
   background-color: var(--color-card);
 }
+.bg-secondary-theme {
+  background-color: var(--color-secondary);
+}
 
 /* Text */
 .text-theme {
@@ -211,6 +227,17 @@ textarea:focus-visible {
 }
 .text-muted-theme {
   color: var(--color-text-muted);
+}
+.text-secondary-theme {
+  color: var(--color-secondary);
+}
+
+/* Status Utilities */
+.bg-success-theme {
+  background-color: var(--color-success);
+}
+.bg-danger-theme {
+  background-color: var(--color-danger);
 }
 
 /* Borders */
@@ -236,8 +263,6 @@ textarea:focus-visible {
 
 /* ============================================================
    BASE ELEMENT DEFAULTS
-   Sets sensible defaults on html/body so you don't need to
-   add bg-theme / text-theme to every page wrapper manually.
    ============================================================ */
 
 html {
@@ -245,7 +270,7 @@ html {
 }
 
 html.dark {
-  color-scheme: dark; /* tells browser to dark-theme native UI (scrollbars, inputs, etc.) */
+  color-scheme: dark;
 }
 
 body {
