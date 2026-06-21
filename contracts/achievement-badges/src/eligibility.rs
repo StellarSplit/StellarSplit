@@ -1,107 +1,92 @@
-//! # Eligibility Provider Module
-//!
-//! This module extracts badge eligibility evaluation into a dedicated provider
-//! with real achievement evidence rather than mock assumptions.
+use soroban_sdk::{contracttype, Env, Symbol};
 
-use crate::types::*;
-use soroban_sdk::contracttype;
+use crate::BadgeEvidence;
 
-/// Real achievement evidence for eligibility evaluation
+// ─── Result type returned by evaluate_eligibility ────────────────────────────
+
 #[contracttype]
-#[derive(Clone, Debug)]
-pub struct AchievementEvidence {
-    /// Number of splits created by the user
-    pub splits_created: u32,
-    /// Number of splits the user has participated in
-    pub splits_participated: u32,
-    /// Total amount spent in splits (in the smallest unit)
-    pub total_amount_spent: u128,
-    /// Number of settlements completed
-    pub settlements_completed: u32,
-    /// Number of groups managed by user
-    pub groups_managed: u32,
+#[derive(Clone, Debug, PartialEq)]
+pub struct EligibilityResult {
+    pub is_eligible: bool,
+    pub tier: Symbol,        // "none" | "bronze" | "silver" | "gold"
+    pub reason: Symbol,      // short machine-readable code
 }
 
-/// Eligibility evaluation result
-#[contracttype]
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub enum EligibilityResult {
-    Eligible,
-    NotEligible, // Evidence does not meet badge criteria
-}
+// ─── Thresholds ──────────────────────────────────────────────────────────────
 
-// ============================================================================
-// Eligibility Evaluators for Each Badge Type
-// ============================================================================
+/// Minimum on-chain split amount (in stroops / base units) per tier.
+const GOLD_MIN_AMOUNT: i128   = 10_000_000_000; // 10 000 XLM-equivalent
+const SILVER_MIN_AMOUNT: i128 =  1_000_000_000; //  1 000 XLM-equivalent
+const BRONZE_MIN_AMOUNT: i128 =    100_000_000; //    100 XLM-equivalent
 
-/// Check eligibility for FirstSplitCreator badge
-pub fn evaluate_first_split_creator(evidence: &AchievementEvidence) -> EligibilityResult {
-    if evidence.splits_created >= 1 {
-        EligibilityResult::Eligible
-    } else {
-        EligibilityResult::NotEligible
-    }
-}
+/// Minimum participant count per tier.
+const GOLD_MIN_PARTICIPANTS: u32   = 10;
+const SILVER_MIN_PARTICIPANTS: u32 =  5;
+const BRONZE_MIN_PARTICIPANTS: u32 =  2;
 
-/// Check eligibility for HundredSplitsParticipated badge
-pub fn evaluate_hundred_splits_participated(evidence: &AchievementEvidence) -> EligibilityResult {
-    if evidence.splits_participated >= 100 {
-        EligibilityResult::Eligible
-    } else {
-        EligibilityResult::NotEligible
-    }
-}
+/// Minimum completion rate (0–100) required for any badge.
+const MIN_COMPLETION_RATE: u32 = 80;
 
-/// Check eligibility for BigSpender badge
-pub fn evaluate_big_spender(evidence: &AchievementEvidence, threshold: u128) -> EligibilityResult {
-    if evidence.total_amount_spent >= threshold {
-        EligibilityResult::Eligible
-    } else {
-        EligibilityResult::NotEligible
-    }
-}
+// ─── Core evaluation logic ───────────────────────────────────────────────────
 
-/// Check eligibility for FrequentSettler badge
-pub fn evaluate_frequent_settler(evidence: &AchievementEvidence) -> EligibilityResult {
-    if evidence.settlements_completed >= 50 {
-        EligibilityResult::Eligible
-    } else {
-        EligibilityResult::NotEligible
-    }
-}
-
-/// Check eligibility for GroupLeader badge
-pub fn evaluate_group_leader(evidence: &AchievementEvidence) -> EligibilityResult {
-    if evidence.groups_managed >= 1 {
-        EligibilityResult::Eligible
-    } else {
-        EligibilityResult::NotEligible
-    }
-}
-
-// ============================================================================
-// Main Eligibility Provider
-// ============================================================================
-
-/// Evaluate badge eligibility based on provided evidence
+/// Pure evaluation function — receives only already-verified evidence values.
 ///
-/// This is the main entry point for eligibility evaluation. It takes explicit
-/// achievement evidence and evaluates whether the user meets the criteria for
-/// a specific badge type.
-///
-/// The evaluation is deterministic and based purely on the evidence data,
-/// not on mock assumptions. Real achievement evidence must be provided
-/// to back the minting decision.
-pub fn evaluate_eligibility(
-    badge_type: &BadgeType,
-    evidence: &AchievementEvidence,
-    big_spender_threshold: u128,
-) -> EligibilityResult {
-    match badge_type {
-        BadgeType::FirstSplitCreator => evaluate_first_split_creator(evidence),
-        BadgeType::HundredSplitsParticipated => evaluate_hundred_splits_participated(evidence),
-        BadgeType::BigSpender => evaluate_big_spender(evidence, big_spender_threshold),
-        BadgeType::FrequentSettler => evaluate_frequent_settler(evidence),
-        BadgeType::GroupLeader => evaluate_group_leader(evidence),
+/// Called both from `check_badge_eligibility_with_evidence` (raw caller
+/// evidence, for preview) and from `mint_badge_with_evidence` (on-chain
+/// verified evidence only).
+pub fn evaluate_eligibility(env: &Env, evidence: &BadgeEvidence) -> EligibilityResult {
+    // Gate on completion rate first
+    if evidence.completion_rate < MIN_COMPLETION_RATE {
+        return EligibilityResult {
+            is_eligible: false,
+            tier: Symbol::new(env, "none"),
+            reason: Symbol::new(env, "low_completion"),
+        };
+    }
+
+    // Gate on non-negative amount
+    if evidence.total_split_amount <= 0 {
+        return EligibilityResult {
+            is_eligible: false,
+            tier: Symbol::new(env, "none"),
+            reason: Symbol::new(env, "invalid_amount"),
+        };
+    }
+
+    // Determine tier (highest matching wins)
+    if evidence.total_split_amount  >= GOLD_MIN_AMOUNT
+        && evidence.participant_count >= GOLD_MIN_PARTICIPANTS
+    {
+        return EligibilityResult {
+            is_eligible: true,
+            tier: Symbol::new(env, "gold"),
+            reason: Symbol::new(env, "meets_gold"),
+        };
+    }
+
+    if evidence.total_split_amount  >= SILVER_MIN_AMOUNT
+        && evidence.participant_count >= SILVER_MIN_PARTICIPANTS
+    {
+        return EligibilityResult {
+            is_eligible: true,
+            tier: Symbol::new(env, "silver"),
+            reason: Symbol::new(env, "meets_silver"),
+        };
+    }
+
+    if evidence.total_split_amount  >= BRONZE_MIN_AMOUNT
+        && evidence.participant_count >= BRONZE_MIN_PARTICIPANTS
+    {
+        return EligibilityResult {
+            is_eligible: true,
+            tier: Symbol::new(env, "bronze"),
+            reason: Symbol::new(env, "meets_bronze"),
+        };
+    }
+
+    EligibilityResult {
+        is_eligible: false,
+        tier: Symbol::new(env, "none"),
+        reason: Symbol::new(env, "below_threshold"),
     }
 }

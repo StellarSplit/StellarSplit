@@ -1,82 +1,61 @@
-//! # Storage Module for Achievement Badges Contract
-//!
-//! This module handles all data storage operations for the badge system.
+use soroban_sdk::{Address, Env, String, Symbol};
 
-use crate::metadata;
-use crate::types::*;
-use soroban_sdk::{contracttype, symbol_short, Address, Env, String, Symbol, Vec};
+use crate::Badge;
 
-/// Storage keys
-const ADMIN: Symbol = symbol_short!("ADMIN");
-const NEXT_TOKEN_ID: Symbol = symbol_short!("NEXT_ID");
+// ─── Storage keys ─────────────────────────────────────────────────────────────
 
-/// Storage key for user badges
-#[contracttype]
-#[derive(Clone)]
-pub enum StorageKey {
-    /// User's badge collection: user_address -> Vec<UserBadge>
-    UserBadges(Address),
-    /// Minted badge tracking: (user_address, badge_type) -> bool
-    MintedBadge(Address, BadgeType),
+const KEY_ADMIN: Symbol           = Symbol::short("ADMIN");
+const KEY_ESCROW_CONTRACT: Symbol = Symbol::short("ESCROW");
+
+fn badge_key(env: &Env, user: &Address, escrow_id: &String) -> soroban_sdk::Val {
+    (Symbol::new(env, "BADGE"), user.clone(), escrow_id.clone()).into_val(env)
 }
 
-/// Set the admin address
+// ─── Admin ────────────────────────────────────────────────────────────────────
+
 pub fn set_admin(env: &Env, admin: &Address) {
-    env.storage().instance().set(&ADMIN, admin);
+    env.storage().instance().set(&KEY_ADMIN, admin);
 }
 
-/// Get the admin address
 pub fn get_admin(env: &Env) -> Address {
-    env.storage().instance().get(&ADMIN).unwrap()
+    env.storage()
+        .instance()
+        .get(&KEY_ADMIN)
+        .expect("contract not initialized")
 }
 
-/// Check if admin is set
-pub fn has_admin(env: &Env) -> bool {
-    env.storage().instance().has(&ADMIN)
+// ─── Escrow contract address ──────────────────────────────────────────────────
+
+/// Store the trusted escrow contract address at initialization time.
+/// This is the address `mint_badge_with_evidence` cross-references for
+/// on-chain verification — callers cannot override it.
+pub fn set_escrow_contract(env: &Env, escrow: &Address) {
+    env.storage().instance().set(&KEY_ESCROW_CONTRACT, escrow);
 }
 
-/// Get the next token ID and increment the counter
-pub fn get_next_token_id(env: &Env) -> u64 {
-    let current_id = env.storage().instance().get(&NEXT_TOKEN_ID).unwrap_or(0u64);
-    let next_id = current_id + 1;
-    env.storage().instance().set(&NEXT_TOKEN_ID, &next_id);
-    next_id
+pub fn get_escrow_contract(env: &Env) -> Address {
+    env.storage()
+        .instance()
+        .get(&KEY_ESCROW_CONTRACT)
+        .expect("escrow contract address not set — call initialize first")
 }
 
-/// Check if a user has already minted a specific badge
-pub fn has_minted_badge(env: &Env, user: &Address, badge_type: &BadgeType) -> bool {
-    let key = StorageKey::MintedBadge(user.clone(), badge_type.clone());
-    env.storage().persistent().has(&key)
-}
+// ─── Badges ───────────────────────────────────────────────────────────────────
 
-/// Mark a badge as minted for a user
-pub fn set_minted_badge(env: &Env, user: &Address, badge_type: &BadgeType) {
-    let key = StorageKey::MintedBadge(user.clone(), badge_type.clone());
-    env.storage().persistent().set(&key, &true);
-}
-
-/// Add a badge to user's collection
-pub fn add_user_badge(env: &Env, user: &Address, badge: &UserBadge) {
-    let key = StorageKey::UserBadges(user.clone());
-    let mut badges: Vec<UserBadge> = env
-        .storage()
-        .persistent()
-        .get(&key)
-        .unwrap_or(Vec::new(env));
-    badges.push_back(badge.clone());
-    env.storage().persistent().set(&key, &badges);
-}
-
-/// Get all badges for a user
-pub fn get_user_badges(env: &Env, user: &Address) -> Vec<UserBadge> {
-    let key = StorageKey::UserBadges(user.clone());
+pub fn save_badge(env: &Env, user: &Address, escrow_id: &String, badge: &Badge) {
     env.storage()
         .persistent()
-        .get(&key)
-        .unwrap_or(Vec::new(env))
+        .set(&badge_key(env, user, escrow_id), badge);
 }
 
-/// Get badge metadata for a badge type using standardized definitions
-pub fn get_badge_metadata(env: &Env, badge_type: &BadgeType) -> BadgeMetadata {
-    metadata::get_metadata_for_badge(env, badge_type)
+pub fn has_badge(env: &Env, user: &Address, escrow_id: &String) -> bool {
+    env.storage()
+        .persistent()
+        .has(&badge_key(env, user, escrow_id))
+}
+
+pub fn remove_badge(env: &Env, user: &Address, escrow_id: &String) {
+    env.storage()
+        .persistent()
+        .remove(&badge_key(env, user, escrow_id));
 }
