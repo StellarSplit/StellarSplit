@@ -7,6 +7,7 @@ import { AppModule } from './app.module';
 import { GlobalHttpExceptionFilter } from './common/filters/http-exception.filter';
 import { TypeOrmExceptionFilter } from './common/filters/typeorm-exception.filter';
 import { validateEnvironment, Environment } from './config/env.validation';
+import { SocketIoAdapter } from './websocket/socket-io.adapter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -89,6 +90,13 @@ async function bootstrap() {
   
   // Security middleware and production hardening are centralized in SecurityModule.
   app.enableCors(corsOptions);
+  app.useWebSocketAdapter(
+    new SocketIoAdapter(app, {
+      origin: corsOptions.origin,
+      credentials: true,
+      methods: ['GET', 'POST'],
+    }),
+  );
 
   // Configure Swagger
   const appConfig = configService.get('app');
