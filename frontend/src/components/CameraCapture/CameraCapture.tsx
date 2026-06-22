@@ -59,18 +59,26 @@ export const CameraCapture = ({
 
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
+  const [fallbackReason, setFallbackReason] = useState<
+    'permission_denied' | 'device_not_found' | null
+  >(null);
 
   // Initialize camera on mount
   useEffect(() => {
     const initializeCamera = async () => {
       try {
         const permissionStatus = await checkCameraPermission();
+
         if (permissionStatus === 'denied') {
+          setFallbackReason('permission_denied');
+
           setCameraState((prev) => ({
             ...prev,
             status: 'error',
-            error: 'Camera permission was previously denied. Please enable it in browser settings.',
+            error:
+              'Camera permission has been denied. You can continue by entering your receipt manually.',
           }));
+
           return;
         }
 
@@ -111,6 +119,29 @@ export const CameraCapture = ({
       }
     };
   }, [cameraState.isFrontCamera, onError]);
+
+  const handleRetryCamera = async () => {
+  try {
+    setFallbackReason(null);
+
+    await requestCameraPermission({
+      video: {
+        facingMode: cameraState.isFrontCamera ? 'user' : 'environment',
+      },
+      audio: false,
+    });
+
+    window.location.reload();
+  } catch (error) {
+    const err = error as any;
+
+    setFallbackReason(
+      err.permissionError?.type === 'not-found'
+        ? 'device_not_found'
+        : 'permission_denied'
+    );
+  }
+};
 
   // Switch camera
   const handleSwitchCamera = async () => {
@@ -176,12 +207,28 @@ export const CameraCapture = ({
         }
       }, 'image/jpeg');
     } catch (error) {
-      const err = error as Error;
+      const err = error as any;
+
+      if (
+        err.name === 'NotAllowedError' ||
+        err.permissionError?.type === 'permission-denied'
+      ) {
+        setFallbackReason('permission_denied');
+      }
+
+      if (
+        err.name === 'NotFoundError' ||
+        err.permissionError?.type === 'not-found'
+      ) {
+        setFallbackReason('device_not_found');
+      }
+
       setCameraState((prev) => ({
         ...prev,
         status: 'error',
-        error: err.message || 'Failed to capture image',
+        error: getUserFriendlyErrorMessage(err),
       }));
+
       onError?.(err);
     }
   };
@@ -341,69 +388,81 @@ export const CameraCapture = ({
               </div>
             </div>
           </>
-        ) : cameraState.status === 'captured' && cameraState.capturedImageUrl ? (
-          <>
-            {/* Captured Image Preview */}
-            <img
-              src={cameraState.capturedImageUrl}
-              alt="Captured receipt"
-              className="w-full aspect-video object-cover"
-            />
+        ) : ) : cameraState.status === 'error' ? (
+  <div className="w-full p-6 bg-gray-50 rounded-xl">
 
-            {/* Image Review Controls */}
-            <div className="absolute inset-0 flex items-end justify-center p-4 bg-gradient-to-t from-black/50 to-transparent">
-              <div className="flex gap-4">
-                {/* Retake Button */}
-                <button
-                  onClick={handleRetake}
-                  disabled={isCompressing}
-                  aria-label="Retake photo"
-                  className="px-6 py-3 bg-gray-600 text-white rounded-full hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-purple-500 flex items-center gap-2"
-                >
-                  <Repeat2 size={20} />
-                  Retake
-                </button>
+    {fallbackReason && (
+      <div className="mb-6 rounded-lg border border-yellow-300 bg-yellow-50 p-4">
 
-                {/* Confirm Button */}
-                <button
-                  onClick={handleConfirmCapture}
-                  disabled={isCompressing}
-                  aria-label="Confirm and upload photo"
-                  className="px-6 py-3 bg-purple-500 text-white rounded-full hover:bg-purple-600 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-purple-500 flex items-center gap-2"
-                >
-                  {isCompressing ? (
-                    <>
-                      <span className="animate-spin">⏳</span>
-                      Compressing...
-                    </>
-                  ) : (
-                    <>
-                      <Check size={20} />
-                      Confirm
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </>
-        ) : cameraState.status === 'requesting' ? (
-          <div className="w-full aspect-video flex items-center justify-center">
-            <div className="text-center text-white">
-              <div className="animate-spin mb-4">
-                <Camera size={48} />
-              </div>
-              <p>Requesting camera access...</p>
-            </div>
+        <div className="flex gap-3">
+
+          <AlertTriangle className="text-yellow-600 mt-1" />
+
+          <div>
+
+            <h3 className="font-semibold">
+              Camera unavailable
+            </h3>
+
+            <p className="text-sm mt-1">
+              {fallbackReason === 'permission_denied'
+                ? 'Camera access was denied. You can continue by entering your receipt manually.'
+                : 'No camera was detected on this device. Manual receipt entry is available.'}
+            </p>
+
+            <a
+              href="https://support.google.com/chrome/answer/2693767"
+              target="_blank"
+              rel="noreferrer"
+              className="text-purple-600 underline text-sm"
+            >
+              How to enable camera
+            </a>
+
           </div>
-        ) : cameraState.status === 'error' ? (
-          <div className="w-full aspect-video flex items-center justify-center bg-red-900/20">
-            <div className="text-center text-white p-4">
-              <X size={48} className="mx-auto mb-4 text-red-400" />
-              <p className="font-semibold mb-2">Camera Error</p>
-              <p className="text-sm text-gray-300">{cameraState.error}</p>
-            </div>
-          </div>
-        ) : null}
+
+        </div>
+
+      </div>
+    )}
+
+    {fallbackReason && (
+      <>
+        <button
+          onClick={handleRetryCamera}
+          className="mb-6 rounded-lg bg-purple-600 px-4 py-2 text-white"
+        >
+          Try camera again
+        </button>
+
+        <ManualEntryFallback
+          onSubmit={(data) => {
+            console.log(data);
+          }}
+          onCancel={() => setFallbackReason(null)}
+        />
+      </>
+    )}
+
+    {!fallbackReason && (
+      <div className="text-center">
+
+        <X
+          size={48}
+          className="mx-auto text-red-500 mb-3"
+        />
+
+        <h3 className="font-semibold mb-2">
+          Camera Error
+        </h3>
+
+        <p>{cameraState.error}</p>
+
+      </div>
+    )}
+
+  </div>
+) : null}
       </div>
 
       {/* Hidden Canvas for Image Capture */}
