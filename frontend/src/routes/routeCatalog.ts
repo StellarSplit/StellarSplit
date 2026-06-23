@@ -13,6 +13,8 @@ export interface RouteCatalogEntry {
   label: string;
   /** Whether this route should appear in navigation surfaces (sidebar, navbar) */
   showInNavigation: boolean;
+  /** Optional group for secondary navigation surfaces (e.g. sidebar Tools section) */
+  group?: 'tools';
   /** Optional description or context for the route */
   description?: string;
   /** Import paths or lazy loading function for the page component */
@@ -131,6 +133,7 @@ export const routeCatalog: RouteCatalogEntry[] = [
     path: "/create-split",
     label: "Create Split",
     showInNavigation: false,
+    group: "tools",
     description: "Create a new split",
     component: {
       path: "./components/SplitWizard",
@@ -142,6 +145,7 @@ export const routeCatalog: RouteCatalogEntry[] = [
     path: "/calculator",
     label: "Calculator",
     showInNavigation: false,
+    group: "tools",
     description: "Split calculator tool",
     component: {
       path: "./pages/SplitCalculatorPage",
@@ -149,6 +153,13 @@ export const routeCatalog: RouteCatalogEntry[] = [
     },
   },
 ];
+
+/**
+ * Get routes in the "tools" group for the sidebar Tools section.
+ */
+export function getToolRoutes(): RouteCatalogEntry[] {
+  return routeCatalog.filter((route) => route.group === 'tools');
+}
 
 /**
  * Get all visible navigation routes.

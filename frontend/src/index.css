@@ -274,3 +274,29 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-text-muted);
 }
+
+/* ============================================================
+   SIDEBAR LINK — base + hover
+   Active state is applied via inline style in Sidebar.tsx.
+   Hover styles live here to avoid fighting with NavLink's
+   style callback (the root cause of the previous flicker).
+   ============================================================ */
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none;
+  color: var(--color-text-muted);
+  border-left: 2px solid transparent;
+  transition: all 0.15s ease;
+}
+
+.sidebar-link:hover:not([aria-current="page"]) {
+  color: var(--color-text);
+  background-color: color-mix(in srgb, var(--color-accent) 6%, transparent);
+}
