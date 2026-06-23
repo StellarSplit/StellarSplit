@@ -18,8 +18,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           style={{
             position: "fixed",
             inset: 0,
-            backgroundColor: "rgba(0,0,0,0.45)",
-            backdropFilter: "blur(2px)",
+            backgroundColor: "rgba(15, 17, 23, 0.4)",
+            backdropFilter: "blur(4px)",
             zIndex: 39,
           }}
           className="lg:hidden"
@@ -52,31 +52,31 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             left: 0,
             right: 0,
             height: "2px",
-            background:
-              "linear-gradient(90deg, var(--color-accent), transparent)",
+            background: "linear-gradient(90deg, var(--color-accent), transparent)",
             opacity: 0.8,
           }}
         />
 
-        {/* ── Brand ── */}
+        {/* ── Brand Section with Logo Integration ── */}
         <div
           style={{
             padding: "1.25rem 1.25rem 1rem",
             display: "flex",
             alignItems: "center",
-            justifyContent: "space-between",
+            justify-content: "space-between",
             borderBottom: "1px solid var(--color-border)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-              <polygon
-                points="12,2 22,20 2,20"
-                stroke="var(--color-accent)"
-                strokeWidth="2"
-                fill="color-mix(in srgb, var(--color-accent) 15%, transparent)"
-              />
-            </svg>
+            <img
+              src="/stellarsplit-logo.png"
+              alt="StellarSplit Logo"
+              style={{
+                height: "1.75rem",
+                width: "auto",
+                objectFit: "contain",
+              }}
+            />
             <span
               style={{
                 fontWeight: 700,
@@ -104,7 +104,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               borderRadius: "0.375rem",
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
+              justify-content: "center",
             }}
           >
             <svg
@@ -124,7 +124,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           </button>
         </div>
 
-        {/* ── Nav links ── */}
+        {/* ── Nav Links Navigation Track ── */}
         <nav
           style={{
             flex: 1,
@@ -162,9 +162,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 fontSize: "0.9rem",
                 fontWeight: 500,
                 textDecoration: "none",
-                color: isActive
-                  ? "var(--color-accent)"
-                  : "var(--color-text-muted)",
+                color: isActive ? "var(--color-accent)" : "var(--color-text-muted)",
                 backgroundColor: isActive
                   ? "color-mix(in srgb, var(--color-accent) 12%, transparent)"
                   : "transparent",
@@ -201,7 +199,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             </NavLink>
           ))}
 
-          {/* GitHub link */}
+          {/* Open-Source Infrastructure Track */}
           <a
             href="https://github.com/OlufunbiIK/StellarSplit"
             target="_blank"
@@ -237,14 +235,15 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           </a>
         </nav>
 
-        {/* ── Language selector — pinned to bottom ── */}
+        {/* ── Language Selector — pinned to bottom with safe area layout bottom inset ── */}
         <div
           style={{
-            padding: "1rem 1.25rem",
+            padding: "1rem 1.25rem calc(1rem + var(--sab, env(safe-area-inset-bottom)))",
             borderTop: "1px solid var(--color-border)",
             display: "flex",
             alignItems: "center",
-            justifyContent: "space-between",
+            justify-content: "space-between",
+            backgroundColor: "var(--color-card)",
           }}
         >
           <span
