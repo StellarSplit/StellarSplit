@@ -1,13 +1,9 @@
-use soroban_sdk::{Address, Env, String, Symbol};
-
 use crate::Badge;
-use crate::metadata;
-use crate::types::*;
-use soroban_sdk::{contracttype, symbol_short, Address, Env, Symbol, Vec};
+use soroban_sdk::{Address, Env, IntoVal, String, Symbol};
 
 // ─── Storage keys ─────────────────────────────────────────────────────────────
 
-const KEY_ADMIN: Symbol           = Symbol::short("ADMIN");
+const KEY_ADMIN: Symbol = Symbol::short("ADMIN");
 const KEY_ESCROW_CONTRACT: Symbol = Symbol::short("ESCROW");
 
 fn badge_key(env: &Env, user: &Address, escrow_id: &String) -> soroban_sdk::Val {
