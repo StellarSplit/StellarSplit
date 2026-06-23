@@ -1,8 +1,9 @@
 import { create } from "zustand";
+import { applyServiceWorkerUpdate } from "../utils/sw-register";
 
 /**
  * PWA / service worker UI state. Updated by `registerServiceWorker` in sw-register
- * and by user actions (dismiss, retry) from InstallPrompt.
+ * and by user actions (dismiss, retry) from InstallPrompt / UpdateBanner.
  */
 export type ServiceWorkerUiPhase =
   | "idle"
@@ -15,10 +16,14 @@ export type ServiceWorkerUiPhase =
 export type ServiceWorkerStore = {
   phase: ServiceWorkerUiPhase;
   error: string | null;
+  registration: ServiceWorkerRegistration | null;
 
   setPhase: (phase: ServiceWorkerUiPhase) => void;
   setError: (message: string | null) => void;
-  setUpdateAvailable: () => void;
+  setRegistration: (reg: ServiceWorkerRegistration | null) => void;
+  setUpdateAvailable: (available?: boolean) => void;
+  /** Dispatches message to the waiting worker to take immediate control and reloads. */
+  applyUpdate: () => void;
   /** Hide the "new version" bar until a future update is detected. */
   dismissUpdateBanner: () => void;
   clearError: () => void;
@@ -26,9 +31,10 @@ export type ServiceWorkerStore = {
   reset: () => void;
 };
 
-const initial: Pick<ServiceWorkerStore, "phase" | "error"> = {
-  phase: "idle",
-  error: null,
+const initial = {
+  phase: "idle" as ServiceWorkerUiPhase,
+  error: null as string | null,
+  registration: null as ServiceWorkerRegistration | null,
 };
 
 export const useServiceWorkerStore = create<ServiceWorkerStore>((set, get) => ({
@@ -47,9 +53,22 @@ export const useServiceWorkerStore = create<ServiceWorkerStore>((set, get) => ({
     }));
   },
 
-  setUpdateAvailable: () => {
+  setRegistration: (registration) => set({ registration }),
+
+  setUpdateAvailable: (available = true) => {
     if (get().phase === "error") return;
-    set({ phase: "update_available", error: null });
+    if (available) {
+      set({ phase: "update_available", error: null });
+    } else {
+      set((s) => ({
+        phase: s.phase === "update_available" ? "ready" : s.phase,
+      }));
+    }
+  },
+
+  applyUpdate: () => {
+    // Gracefully trigger the centralized lifecycle skip-waiting sequence 
+    applyServiceWorkerUpdate();
   },
 
   dismissUpdateBanner: () => {

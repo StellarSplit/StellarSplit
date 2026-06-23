@@ -9,14 +9,21 @@ export const SW_EVENT_ERROR = "stellarsplit:sw-error";
 
 const SW_PATH = "/sw.js";
 
+// Keep active track of the registration instance within memory
 let lastRegistration: ServiceWorkerRegistration | null = null;
+
+// Module-level flags to mitigate StrictMode duplicate invocation race conditions
+let isRegistrationInProgress = false;
+let isControllerChangeListening = false;
 
 /**
  * Fires when a new service worker is installed and an older one is still in control
  * (typical: new build waiting to activate).
  */
 function emitUpdateAvailable() {
-  useServiceWorkerStore.getState().setUpdateAvailable();
+  // Update Zustand state
+  useServiceWorkerStore.getState().setUpdateAvailable(true);
+  
   if (typeof window !== "undefined") {
     window.dispatchEvent(
       new CustomEvent(SW_EVENT_UPDATE_AVAILABLE, { detail: {} }),
@@ -73,29 +80,42 @@ function watchRegistration(reg: ServiceWorkerRegistration) {
 }
 
 /**
- * Call after `navigator` is available (e.g. from `main.tsx`).
- * Drives `useServiceWorkerStore` (phase, error) and listens for new SW versions.
+ * Call after `navigator` is available (e.g. from `main.tsx` or `App.tsx`).
+ * Drives `useServiceWorkerStore` and listens for new SW versions.
+ * Guarded against concurrent React 18 StrictMode mount loops.
  */
 export async function registerServiceWorker(): Promise<void> {
   const store = useServiceWorkerStore.getState();
+  
   if (!("serviceWorker" in navigator)) {
-    store.setPhase("unsupported");
+    // Gracefully handle unsupported clients
+    if (typeof store.setPhase === "function") store.setPhase("unsupported");
     return;
   }
 
-  store.setPhase("registering");
-  store.setError(null);
+  // Prevent double-registrations triggering warnings or race states in dev logs
+  if (isRegistrationInProgress) {
+    return;
+  }
+  isRegistrationInProgress = true;
+
+  if (typeof store.setPhase === "function") store.setPhase("registering");
+  if (typeof store.setError === "function") store.setError(null);
   lastRegistration = null;
 
   try {
     const reg = await navigator.serviceWorker.register(SW_PATH, {
       updateViaCache: "none",
     });
+    
     lastRegistration = reg;
-    store.setPhase("ready");
+    if (typeof store.setRegistration === "function") store.setRegistration(reg);
+    if (typeof store.setPhase === "function") store.setPhase("ready");
+    
     watchRegistration(reg);
     emitRegistered(reg);
 
+    // Watch for visibility cycles to actively check for remote build updates
     const onVisible = () => {
       if (document.visibilityState === "visible" && reg) {
         void reg.update();
@@ -103,11 +123,12 @@ export async function registerServiceWorker(): Promise<void> {
     };
     document.addEventListener("visibilitychange", onVisible);
   } catch (err) {
+    isRegistrationInProgress = false; // Reset lock on structural failures to allow retry paths
     const message =
       err instanceof Error
         ? err.message
         : "Service worker registration failed";
-    store.setError(message);
+    if (typeof store.setError === "function") store.setError(message);
     emitError(message, err);
   }
 }
@@ -119,14 +140,17 @@ export async function registerServiceWorker(): Promise<void> {
 export function applyServiceWorkerUpdate(): void {
   const reg = lastRegistration;
   if (reg?.waiting) {
-    const onControllerChange = () => {
-      navigator.serviceWorker.removeEventListener(
-        "controllerchange",
-        onControllerChange,
-      );
-      window.location.reload();
-    };
-    navigator.serviceWorker.addEventListener("controllerchange", onControllerChange);
+    if (!isControllerChangeListening) {
+      isControllerChangeListening = true;
+      const onControllerChange = () => {
+        navigator.serviceWorker.removeEventListener(
+          "controllerchange",
+          onControllerChange,
+        );
+        window.location.reload();
+      };
+      navigator.serviceWorker.addEventListener("controllerchange", onControllerChange);
+    }
     reg.waiting.postMessage({ type: "SKIP_WAITING" });
     return;
   }
@@ -143,7 +167,7 @@ export async function forceRefreshWithCacheClear(): Promise<void> {
       await Promise.all(names.map((name) => caches.delete(name)));
     }
   } catch {
-    /* ignore */
+    /* ignore cache access errors */
   }
   try {
     const r = lastRegistration ?? (await navigator.serviceWorker.getRegistration());
@@ -151,14 +175,17 @@ export async function forceRefreshWithCacheClear(): Promise<void> {
       await r.unregister();
     }
   } catch {
-    /* ignore */
+    /* ignore de-registration failure cascades */
   }
   lastRegistration = null;
+  isRegistrationInProgress = false;
   window.location.reload();
 }
 
 export function __resetServiceWorkerTestStateForTests() {
   lastRegistration = null;
+  isRegistrationInProgress = false;
+  isControllerChangeListening = false;
 }
 
 /** @internal Test-only: assign `lastRegistration` for apply / force-refresh tests. */
