@@ -7,6 +7,18 @@ import { Queue } from 'bull';
 import { Split } from '../../entities/split.entity';
 import { Participant } from '../../entities/participant.entity';
 
+/**
+ * Callable interface of the on-chain `reminder` Soroban contract
+ * (contracts/reminder). These names map 1:1 to the contract's
+ * `#[contractimpl]` functions and are the entry points any on-chain
+ * invocation of the reminder flow must target.
+ */
+export const REMINDER_CONTRACT_FNS = {
+  requestReminder: 'request_reminder',
+  cancelReminder: 'cancel_reminder',
+  getReminderRequested: 'get_reminder_requested',
+} as const;
+
 @Injectable()
 export class ReminderSchedulerService {
     private readonly logger = new Logger(ReminderSchedulerService.name);
@@ -59,9 +71,10 @@ export class ReminderSchedulerService {
                 splitId: split.id,
                 daysToDeadline: diffInDays,
                 amountOwed: participant.amountOwed,
+                contractFn: REMINDER_CONTRACT_FNS.requestReminder,
             });
 
-            this.logger.log(`Queued reminder for participant ${participant.id} in split ${split.id} (${diffInDays} days left)`);
+            this.logger.log(`Queued reminder (${REMINDER_CONTRACT_FNS.requestReminder}) for participant ${participant.id} in split ${split.id} (${diffInDays} days left)`);
         }
     }
 }

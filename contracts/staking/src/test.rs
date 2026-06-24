@@ -4,6 +4,7 @@ extern crate std;
 use crate::event_assertions::*;
 use crate::Error;
 
+use crate::errors::Error;
 use crate::{StakingContract, StakingContractClient};
 use soroban_sdk::token::{Client as TokenClient, StellarAssetClient as TokenAdminClient};
 use soroban_sdk::{

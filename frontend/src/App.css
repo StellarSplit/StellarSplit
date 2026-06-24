@@ -48,7 +48,6 @@
   --card-radius:  0.75rem;
   --card-gap:     clamp(0.75rem, 2.5vw, 1.5rem);
   --touch-target: 2.75rem; /* 44px */
-  --color-accent: #3b82f6;
 }
 
 /* ── Root ───────────────────────────────────────────────────────────────────*/

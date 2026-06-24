@@ -1,7 +1,7 @@
 import { Component, type ReactNode, useEffect, useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import Sidebar from "../components/SIdebar";
+import Sidebar from "../components/Sidebar";
 
 type ShellErrorBoundaryProps = {
   children: ReactNode;

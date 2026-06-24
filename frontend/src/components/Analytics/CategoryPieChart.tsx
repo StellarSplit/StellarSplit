@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   PieChart,
   Pie,
@@ -14,14 +14,7 @@ interface CategoryPieChartProps {
   data: CategoryBreakdown[];
 }
 
-const COLORS = [
-  "#3b82f6",
-  "#10b981",
-  "#f59e0b",
-  "#ef4444",
-  "#8b5cf6",
-  "#6b7280",
-];
+const PALETTE_FIXED = ["#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#6b7280"];
 
 function formatCurrency(value: number): string {
   return `$${value.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
@@ -33,14 +26,30 @@ function cssVar(name: string): string {
     .trim();
 }
 
+/** Re-reads CSS custom properties from :root whenever the resolved theme changes. */
+function useThemeColors() {
+  const { resolvedTheme } = useTheme();
+  return useMemo(
+    () => ({
+      accentColor: cssVar("--color-accent"),
+      borderColor: cssVar("--color-border"),
+      mutedColor: cssVar("--color-text-muted"),
+      surfaceColor: cssVar("--color-surface"),
+      textColor: cssVar("--color-text"),
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [resolvedTheme],
+  );
+}
+
 export function CategoryPieChart({ data }: CategoryPieChartProps) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const { resolvedTheme } = useTheme();
+  const { accentColor, borderColor, mutedColor, surfaceColor, textColor } =
+    useThemeColors();
 
-  const borderColor = cssVar("--color-border");
-  const mutedColor = cssVar("--color-text-muted");
-  const surfaceColor = cssVar("--color-surface");
-  const textColor = cssVar("--color-text");
+  // First slice uses the brand accent color; remaining slices use fixed palette
+  const COLORS = [accentColor, ...PALETTE_FIXED];
 
   const total = data.reduce((s, d) => s + d.amount, 0);
 

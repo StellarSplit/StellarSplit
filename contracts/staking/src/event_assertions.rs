@@ -9,7 +9,8 @@ pub fn assert_event_emitted(
     expected_data: impl IntoVal<Env, Val>,
 ) {
     let events = env.events().all();
-    let expected_data_val = expected_data.into_val(env);
+    let expected_data_val: Val = expected_data.into_val(env);
+    let expected_data_vec: Vec<Val> = vec![env, expected_data_val];
 
     let found = events.iter().any(|event| {
         let (_contract_id, topics, data) = event;

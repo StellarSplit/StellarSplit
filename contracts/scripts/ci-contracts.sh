@@ -14,6 +14,7 @@ SUPPORTED_CONTRACTS=(
   "dispute-resolution"
   "flash-loan"
   "path-payment"
+  "reminder"
   "split-template"
   "staking"
   "reminder"

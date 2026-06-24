@@ -16,7 +16,6 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "useDefineForClassFields": false,
-    "ignoreDeprecations": "5.0",
     "baseUrl": "./src",
     "paths": { "@/*": ["./*"] }
   },

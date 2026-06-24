@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import {
   AreaChart,
   Area,
@@ -24,21 +25,32 @@ function formatCurrency(value: number): string {
   return `$${value.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 }
 
-/** Read a CSS variable from :root at runtime — needed for Recharts inline styles */
 function cssVar(name: string): string {
   return getComputedStyle(document.documentElement)
     .getPropertyValue(name)
     .trim();
 }
 
+/** Re-reads CSS custom properties from :root whenever the resolved theme changes. */
+function useThemeColors() {
+  const { resolvedTheme } = useTheme();
+  return useMemo(
+    () => ({
+      accentColor: cssVar("--color-accent"),
+      borderColor: cssVar("--color-border"),
+      mutedColor: cssVar("--color-text-muted"),
+      surfaceColor: cssVar("--color-surface"),
+      textColor: cssVar("--color-text"),
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [resolvedTheme],
+  );
+}
+
 export function SpendingChart({ data, onPeriodSelect }: SpendingChartProps) {
   const { resolvedTheme } = useTheme();
-
-  // Re-read CSS vars whenever the theme changes
-  const borderColor = cssVar("--color-border");
-  const mutedColor = cssVar("--color-text-muted");
-  const surfaceColor = cssVar("--color-surface");
-  const textColor = cssVar("--color-text");
+  const { accentColor, borderColor, mutedColor, surfaceColor, textColor } =
+    useThemeColors();
 
   const chartData = data.map((d) => ({
     ...d,
@@ -66,10 +78,10 @@ export function SpendingChart({ data, onPeriodSelect }: SpendingChartProps) {
             <linearGradient id="spendGradient" x1="0" y1="0" x2="0" y2="1">
               <stop
                 offset="5%"
-                stopColor="#3b82f6"
+                stopColor={accentColor}
                 stopOpacity={resolvedTheme === "dark" ? 0.2 : 0.3}
               />
-              <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+              <stop offset="95%" stopColor={accentColor} stopOpacity={0} />
             </linearGradient>
           </defs>
 
@@ -108,7 +120,7 @@ export function SpendingChart({ data, onPeriodSelect }: SpendingChartProps) {
           <Area
             type="monotone"
             dataKey="totalSpent"
-            stroke="#3b82f6"
+            stroke={accentColor}
             strokeWidth={2}
             fill="url(#spendGradient)"
             animationDuration={1000}

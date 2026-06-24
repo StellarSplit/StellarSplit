@@ -37,6 +37,12 @@ export class OcrService implements OnModuleInit, OnModuleDestroy {
    * Concurrent calls are safely queued by the pool.
    */
   async scanReceipt(imageBuffer: Buffer): Promise<ParsedReceipt> {
+    // Ensure the worker pool is ready even when the NestJS `onModuleInit`
+    // lifecycle hook has not run (e.g. direct instantiation or tests).
+    if (!this.pool.poolSize) {
+      await this.pool.initialize({ poolSize: 2, language: "eng" });
+    }
+
     const worker = await this.pool.acquire();
 
     try {

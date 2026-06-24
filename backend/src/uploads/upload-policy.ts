@@ -75,23 +75,42 @@ export class UploadPolicyValidator {
   }
 
   sanitizeFilename(filename: string): string {
-    // Remove path traversal attempts
-    const sanitized = filename.replace(/[/\\]/g, this.policy.filenameSanitization.replacementChar);
-    
-    // Remove characters not in allowed set
-    const cleaned = sanitized.replace(/[^a-zA-Z0-9._-]/g, this.policy.filenameSanitization.replacementChar);
-    
+    const replacement = this.policy.filenameSanitization.replacementChar;
+
+    // Neutralize path-traversal tokens ("../") so the dot-dot sequence cannot
+    // survive into the object key, then map any remaining path separators and
+    // disallowed characters to the replacement char.
+    let cleaned = filename
+      .replace(/\.\.\//g, replacement) // collapse "../" traversal tokens
+      .replace(/[/\\]/g, replacement) // remaining path separators
+      .replace(/\.\./g, replacement) // any leftover dot-dot sequences
+      .replace(/[^a-zA-Z0-9._-]/g, replacement); // anything outside the allowed set
+
     // Truncate if too long
-    const truncated = cleaned.length > this.policy.filenameSanitization.maxLength 
-      ? cleaned.substring(0, this.policy.filenameSanitization.maxLength)
-      : cleaned;
-    
-    // Ensure filename is not empty after sanitization
-    if (!truncated || !this.policy.filenameSanitization.allowedChars.test(truncated)) {
+    cleaned =
+      cleaned.length > this.policy.filenameSanitization.maxLength
+        ? cleaned.substring(0, this.policy.filenameSanitization.maxLength)
+        : cleaned;
+
+    // Ensure something meaningful survived. The `allowedChars` regex matches a
+    // single permitted character; we apply it per-character (it is intentionally
+    // non-global so `.test` stays stateless) to confirm at least one character
+    // is both allowed AND not merely the replacement char. A result made up
+    // entirely of replacement characters (e.g. "!!!" -> "___") carries no usable
+    // original content and falls back to a safe default.
+    const hasMeaningfulChar = cleaned
+      .split('')
+      .some(
+        (char) =>
+          char !== replacement &&
+          this.policy.filenameSanitization.allowedChars.test(char),
+      );
+
+    if (!cleaned || !hasMeaningfulChar) {
       return 'file';
     }
-    
-    return truncated;
+
+    return cleaned;
   }
 
   generateObjectKey(sanitizedFilename: string, uuid: string): string {

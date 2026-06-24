@@ -81,10 +81,8 @@ export function buildCorsConfig(configService: ConfigService): {
   };
 }
 
-const globalConfigService = new ConfigService();
-
 @WebSocketGateway({
-  cors: buildCorsConfig(globalConfigService),
+  cors: { origin: '*', credentials: true },
 })
 export class PaymentGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect

@@ -6,6 +6,7 @@ import { notificationPersistence } from "../utils/notificationPersistence";
 interface NotificationsState {
   notifications: Notification[];
   typeFilter: NotificationType | "all";
+  hasHydrated: boolean;
   markAsRead: (id: string) => void;
   markAsUnread: (id: string) => void;
   markAllAsRead: () => void;
@@ -14,8 +15,11 @@ interface NotificationsState {
   addNotification: (notification: Omit<Notification, "id" | "read" | "createdAt">) => void;
   addServerNotifications: (notifications: Notification[]) => void;
   removeNotification: (id: string) => void;
-  unreadCount: () => number;
+  setHasHydrated: (value: boolean) => void;
 }
+
+export const selectUnreadCount = (state: NotificationsState): number =>
+  state.notifications.filter((n) => !n.read).length;
 
 function createNotification(
   input: Omit<Notification, "id" | "read" | "createdAt">
@@ -30,9 +34,12 @@ function createNotification(
 
 export const useNotificationsStore = create<NotificationsState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       notifications: [],
       typeFilter: "all",
+      hasHydrated: false,
+
+      setHasHydrated: (value: boolean) => set({ hasHydrated: value }),
 
       markAsRead: (id) =>
         set((state) => ({
@@ -67,24 +74,27 @@ export const useNotificationsStore = create<NotificationsState>()(
 
       addServerNotifications: (serverNotifications) =>
         set((state) => ({
-          notifications: notificationPersistence.merge(state.notifications, serverNotifications),
+          notifications: notificationPersistence.merge(
+            state.notifications,
+            serverNotifications
+          ),
         })),
 
       removeNotification: (id) =>
         set((state) => ({
           notifications: state.notifications.filter((n) => n.id !== id),
         })),
-
-      unreadCount: () =>
-        get().notifications.filter((n) => !n.read).length,
     }),
     {
       name: "stellarsplit.notifications-storage",
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ 
+      partialize: (state) => ({
         notifications: state.notifications,
-        typeFilter: state.typeFilter 
+        typeFilter: state.typeFilter,
       }),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
     }
   )
 );

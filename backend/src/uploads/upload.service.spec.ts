@@ -9,6 +9,20 @@ jest.mock('@aws-sdk/s3-request-presigner', () => ({
   getSignedUrl: jest.fn(),
 }));
 
+// Mock the S3 client so command dispatch (e.g. deleteFile -> send) does not
+// attempt a real AWS network call during tests, which would otherwise reject
+// and surface as an unhandled promise rejection that crashes the test process.
+const mockS3Send = jest.fn().mockResolvedValue({});
+jest.mock('@aws-sdk/client-s3', () => {
+  const actual = jest.requireActual('@aws-sdk/client-s3');
+  return {
+    ...actual,
+    S3Client: jest.fn().mockImplementation(() => ({
+      send: mockS3Send,
+    })),
+  };
+});
+
 describe('UploadService', () => {
   let service: UploadService;
   let configService: ConfigService;
@@ -142,9 +156,12 @@ describe('UploadService', () => {
     it('should sanitize filename properly', async () => {
       mockGetSignedUrl.mockResolvedValue('http://presigned-url');
 
-      const result = await service.getPresignedUploadUrl('../../../etc/passwd', 'image/jpeg');
-      
-      expect(result.key).toMatch(/^receipts\/[a-f0-9-]+-_\.+_etc_passwd$/);
+      const result = await service.getPresignedUploadUrl('../../../etc/passwd.jpg', 'image/jpeg');
+
+      // Path-traversal sequences must be neutralized: separators and "../"
+      // tokens collapse to the replacement char and no ".." survives into the
+      // object key (matching the security-sound sanitizer in upload-policy).
+      expect(result.key).toMatch(/^receipts\/[a-f0-9-]+-___etc_passwd\.jpg$/);
       expect(result.key).not.toContain('..');
     });
 

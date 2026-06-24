@@ -4,6 +4,7 @@ import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { EventEmitterModule } from "@nestjs/event-emitter";
 import { TypeOrmModule } from "@nestjs/typeorm";
+import { APP_INTERCEPTOR } from "@nestjs/core";
 
 import * as dotenv from "dotenv";
 import * as path from "path";
@@ -49,6 +50,8 @@ import { WebhooksModule } from "./webhooks/webhooks.module";
 import { ReputationModule } from "./reputation/reputation.module";
 import { FraudDetectionModule } from "./fraud-detection/fraud-detection.module";
 import { SecurityModule } from "./security/security.module";
+import { CommonModule } from "./common/common.module";
+import { IdempotencyInterceptor } from "./common/idempotency/idempotency.interceptor";
 // Duplicate imports removed; already imported above.
 // Load environment variables
 dotenv.config({
@@ -95,6 +98,7 @@ dotenv.config({
     }),
 
     // ✅ Feature modules
+    CommonModule,
     SecurityModule,
     HealthModule,
     StellarModule,
@@ -138,6 +142,12 @@ dotenv.config({
     ShortLinksModule,
     FraudDetectionModule,
     // Duplicated modules were already included earlier.
+  ],
+  providers: [
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: IdempotencyInterceptor,
+    },
   ],
 })
 export class AppModule {}

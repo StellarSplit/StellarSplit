@@ -6,6 +6,7 @@ import { Split } from "../../entities/split.entity";
 import { OcrModule } from "../../ocr/ocr.module";
 import { Receipt } from "../../receipts/entities/receipt.entity";
 import { ParticipantsModule } from "../participants/participants.module";
+import { CommonModule } from "../../common/common.module";
 import { SplitCalculationService } from "./split-calculation.service";
 import { SplitsController } from "./splits.controller";
 import { SplitsService } from "./splits.service";
@@ -24,6 +25,7 @@ import { SplitsService } from "./splits.service";
     TypeOrmModule.forFeature([Split, Item, Participant, Receipt]),
     OcrModule,
     ParticipantsModule,
+    CommonModule,
   ],
   controllers: [SplitsController],
   providers: [SplitCalculationService, SplitsService],

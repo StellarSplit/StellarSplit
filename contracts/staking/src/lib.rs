@@ -10,6 +10,8 @@ mod storage;
 mod types;
 
 #[cfg(test)]
+mod event_assertions;
+#[cfg(test)]
 mod test;
 
 pub use crate::errors::*;

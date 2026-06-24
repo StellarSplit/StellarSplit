@@ -1,4 +1,4 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { Global, INestApplication, Module, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import request from 'supertest';
@@ -13,6 +13,40 @@ jest.mock('ioredis', () => {
     ping: mockPing,
   }));
 });
+
+// In the running application ConfigModule is registered with `isGlobal: true`
+// and TypeOrmModule.forRootAsync provides a global DataSource, so HealthModule
+// resolves ConfigService and DataSource without importing them directly. This
+// global mock module reproduces that ambient availability in isolation, letting
+// the health endpoints be exercised without a live Postgres/Redis.
+@Global()
+@Module({
+  providers: [
+    {
+      provide: ConfigService,
+      useValue: {
+        get: (key: string) => {
+          switch (key) {
+            case 'APP_VERSION':
+              return '1.2.3';
+            case 'REDIS_URL':
+              return process.env.REDIS_URL;
+            default:
+              return undefined;
+          }
+        },
+      },
+    },
+    {
+      provide: DataSource,
+      useValue: {
+        query: jest.fn().mockResolvedValue([{ '1': 1 }]),
+      },
+    },
+  ],
+  exports: [ConfigService, DataSource],
+})
+class HealthTestDepsModule {}
 
 describe('Health endpoint integration', () => {
   let app: INestApplication;
@@ -29,30 +63,7 @@ describe('Health endpoint integration', () => {
     process.env.REDIS_URL = 'redis://127.0.0.1:6379';
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [HealthModule],
-      providers: [
-        {
-          provide: ConfigService,
-          useValue: {
-            get: (key: string) => {
-              switch (key) {
-                case 'APP_VERSION':
-                  return '1.2.3';
-                case 'REDIS_URL':
-                  return process.env.REDIS_URL;
-                default:
-                  return undefined;
-              }
-            },
-          },
-        },
-        {
-          provide: DataSource,
-          useValue: {
-            query: jest.fn().mockResolvedValue([{ '1': 1 }]),
-          },
-        },
-      ],
+      imports: [HealthTestDepsModule, HealthModule],
     }).compile();
 
     app = moduleFixture.createNestApplication();

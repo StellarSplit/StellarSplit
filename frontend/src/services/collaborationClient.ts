@@ -1,12 +1,9 @@
 import { io, Socket } from 'socket.io-client';
-import { getStoredAuthToken } from '../utils/session';
 import { BASE_API_URL } from '../constants/api';
 import type { PresenceUser, ActivityEvent, ConflictInfo, SplitUpdate } from '../types/collaboration';
 
 /**
  * Socket event payload types for type-safe event handling.
- *
- * These interfaces define the exact shape of each event emitted by the server.
  */
 export interface ServerToClientEvents {
   connect: () => void;
@@ -19,10 +16,10 @@ export interface ServerToClientEvents {
 }
 
 /**
- * Client-to-server event payloads.
+ * Client-to-server event payloads - must match server JoinSplitPayload exactly.
  */
 export interface ClientToServerEvents {
-  join_split: (payload: { splitId: string; user: Partial<PresenceUser> }) => void;
+  join_split: (payload: { splitId: string }) => void;
   leave_split: (payload: { splitId: string }) => void;
   split_activity: (payload: { splitId: string; activity: ActivityEvent }) => void;
   cursor_move: (payload: {
@@ -33,29 +30,30 @@ export interface ClientToServerEvents {
 }
 
 /**
- * Creates and returns a typed Socket.io client for collaboration features.
+ * Creates a typed Socket.io client for collaboration features.
  *
- * Handles:
- * - Extracting the socket URL from BASE_API_URL
- * - Obtaining the auth token from sessionStore (not raw localStorage)
- * - Configuring the socket with correct transports and path
+ * The socket is created with autoConnect: false so the caller decides
+ * when to call socket.connect() - only after a valid auth token exists.
  *
- * @returns A Socket.io client instance configured for the collaboration namespace
+ * @param token - Auth token obtained post-login. Passed as socket auth so
+ *                the server can authenticate the handshake.
  */
-export function createCollaborationSocket(): Socket<ServerToClientEvents, ClientToServerEvents> {
-  // Extract protocol and host from BASE_API_URL
+export function createCollaborationSocket(
+  token: string | null,
+): Socket<ServerToClientEvents, ClientToServerEvents> {
   const url = new URL(
     BASE_API_URL.startsWith('http') ? BASE_API_URL : window.location.origin,
   );
   const socketUrl = `${url.protocol}//${url.host}`;
 
-  // Get auth token from sessionStore (not raw localStorage)
-  const token = getStoredAuthToken();
-
   return io(socketUrl, {
     path: '/socket.io',
     auth: { token },
-    autoConnect: true,
+    autoConnect: false,
     transports: ['websocket', 'polling'],
+    reconnection: true,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 30000,
+    reconnectionAttempts: 10,
   });
 }
