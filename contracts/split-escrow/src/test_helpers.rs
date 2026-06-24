@@ -48,6 +48,7 @@ pub fn make_split(
         max_participants: 50,
         participants,
         balances: Map::new(env),
+        deposits: Map::new(env),
         obligations,
         note: String::from_str(env, ""),
     }
@@ -91,14 +92,14 @@ pub fn assert_status(split: &Split, expected: SplitStatus) {
 /// transitions `status` to `Ready` when `deposited_amount == total_amount`.
 #[cfg(test)]
 pub fn simulate_deposit(split: &mut Split, participant: Address, amount: i128) {
-    let previous = split.balances.get(participant.clone()).unwrap_or(0i128);
+    let previous = split.deposits.get(participant.clone()).unwrap_or(0i128);
 
     // First deposit: register participant.
     if previous == 0 {
         split.participants.push_back(participant.clone());
     }
 
-    // Single source-of-truth balance update — no duplicate reads or writes.
+    split.deposits.set(participant.clone(), previous + amount);
     split.balances.set(participant, previous + amount);
     split.deposited_amount += amount;
 
