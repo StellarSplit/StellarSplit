@@ -51,6 +51,10 @@ impl AchievementBadgesContract {
         events::emit_initialized(&env, &admin);
     }
 
+    /// Read-only eligibility check — no auth required.
+    ///
+    /// This function evaluates real achievement evidence against badge criteria.
+    /// It takes explicit contract inputs to back the eligibility decision.
     pub fn check_eligibility_with_evidence(
         env: Env,
         user: Address,

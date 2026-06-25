@@ -8,18 +8,12 @@ members = [
     "path-payment",
     "split-template",
     "staking",
-    "split-escrow",
-    "multi-sig-splits",
     "reminder",
 ]
-# Experimental / broken crates remain in the workspace so they can share
-# workspace dependencies and be compiled locally, but they are excluded from
-# the CI-supported set (see scripts/ci-contracts.sh).
-#
-# Crates currently excluded from CI:
-# - split-escrow: many compilation errors (draft/broken source)
-# - multi-sig-splits: E0507 move error (needs ownership fix)
+# Experimental / broken/in-progress crates are excluded from the workspace.
 exclude = [
+    "multi-sig-splits",
+    "split-escrow",
 ]
 
 [workspace.dependencies]

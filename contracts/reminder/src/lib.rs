@@ -9,23 +9,27 @@ mod types;
 #[cfg(test)]
 mod test;
 
-pub use crate::types::*;
+pub use events::*;
+pub use storage::*;
+pub use types::*;
 
 #[contract]
 pub struct ReminderContract;
 
 #[contractimpl]
 impl ReminderContract {
-    /// Create (or overwrite) the escrow record for a split with its participants.
-    pub fn create_escrow(env: Env, split_id: String, participants: Vec<EscrowParticipant>) {
-        let escrow = Escrow {
+    pub fn create_reminder_escrow(
+        env: Env,
+        split_id: String,
+        participants: Vec<EscrowParticipant>,
+    ) {
+        let escrow = ReminderEscrow {
             split_id: split_id.clone(),
             participants,
         };
         storage::set_escrow(&env, &split_id, &escrow);
     }
 
-    /// Flag that a participant who still owes money should be reminded to pay.
     pub fn request_reminder(env: Env, split_id: String, participant: Address) {
         participant.require_auth();
 
@@ -52,7 +56,6 @@ impl ReminderContract {
         storage::set_escrow(&env, &split_id, &escrow);
     }
 
-    /// Clear a previously requested reminder for a participant.
     pub fn cancel_reminder(env: Env, split_id: String, participant: Address) {
         participant.require_auth();
 
@@ -79,7 +82,6 @@ impl ReminderContract {
         storage::set_escrow(&env, &split_id, &escrow);
     }
 
-    /// Whether a reminder is currently requested for a participant.
     pub fn get_reminder_requested(env: Env, split_id: String, participant: Address) -> bool {
         let escrow = storage::get_escrow(&env, &split_id).expect("Escrow not found");
 

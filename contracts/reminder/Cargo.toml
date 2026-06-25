@@ -2,9 +2,13 @@
 name = "reminder"
 version = "0.1.0"
 edition = "2021"
+authors = ["StellarSplit Team"]
+description = "Soroban reminder contract for StellarSplit"
+license = "MIT"
+repository = "https://github.com/OlufunbiIK/StellarSplit"
 
 [lib]
-crate-type = ["cdylib", "rlib"]
+crate-type = ["cdylib"]
 
 [dependencies]
 soroban-sdk = { workspace = true }

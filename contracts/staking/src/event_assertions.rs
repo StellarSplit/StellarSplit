@@ -1,7 +1,6 @@
 //! Event assertion utilities for staking contract tests.
 
-use soroban_sdk::testutils::Events as _;
-use soroban_sdk::{vec, Address, Env, IntoVal, Symbol, TryFromVal, Val, Vec};
+use soroban_sdk::{testutils::Events, Address, Env, IntoVal, Symbol, TryFromVal, Val, Vec};
 
 /// Assert that an event was emitted with the expected topic and data.
 pub fn assert_event_emitted(
@@ -11,7 +10,6 @@ pub fn assert_event_emitted(
 ) {
     let events = env.events().all();
     let expected_data_val: Val = expected_data.into_val(env);
-    let expected_data_vec: Vec<Val> = vec![env, expected_data_val];
 
     let found = events.iter().any(|event| {
         let (_contract_id, topics, data) = event;
@@ -24,8 +22,11 @@ pub fn assert_event_emitted(
                 Symbol::try_from_val(env, &topic1),
             ) {
                 if t0 == expected_topic.0 && t1 == expected_topic.1 {
-                    let data_vec: Vec<Val> = vec![env, data];
-                    return data_vec == expected_data_vec;
+                    let d_vec = Vec::<Val>::try_from_val(env, &data);
+                    let e_vec = Vec::<Val>::try_from_val(env, &expected_data_val);
+                    if let (Ok(dv), Ok(ev)) = (d_vec, e_vec) {
+                        return dv == ev;
+                    }
                 }
             }
         }
@@ -43,7 +44,7 @@ pub fn assert_event_emitted(
 pub fn assert_staking_event(env: &Env, action: &str, staker: &Address, amount: i128) {
     let topic = (
         soroban_sdk::symbol_short!("staking"),
-        Symbol::new(env, action),
+        soroban_sdk::Symbol::new(env, action),
     );
     assert_event_emitted(env, topic, (staker, amount));
 }
