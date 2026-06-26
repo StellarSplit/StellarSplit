@@ -62,6 +62,21 @@ pub fn emit_released(env: &Env, split_id: u64, released_amount: i128) {
         .publish(("released", "split_id"), (split_id, released_amount));
 }
 
+/// Per-participant event emitted during `release_funds`, recording the share
+/// of the net released amount attributed to `participant` and paid out to
+/// the split's payee (or creator, in single-payee mode).
+pub fn emit_funds_released_to_participant(
+    env: &Env,
+    split_id: u64,
+    participant: &Address,
+    amount: i128,
+) {
+    env.events().publish(
+        ("released_participant", "split_id", "participant"),
+        (split_id, participant.clone(), amount),
+    );
+}
+
 pub fn emit_cancelled(env: &Env, split_id: u64) {
     env.events().publish(("cancelled", "split_id"), split_id);
 }

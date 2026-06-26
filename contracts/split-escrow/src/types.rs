@@ -33,6 +33,10 @@ pub struct Split {
     pub obligations: Map<Address, i128>,
     /// Short on-chain context (max 128 bytes at creation/update); empty if unset.
     pub note: String,
+    /// Optional single payee for all participant distributions on `release_funds`.
+    /// `None` means each participant's share is sent to `creator` (single-payee
+    /// mode, preserving the original lump-sum-to-creator behavior).
+    pub payee: Option<Address>,
 }
 
 #[contracttype]

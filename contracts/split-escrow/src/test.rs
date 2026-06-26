@@ -77,6 +77,7 @@ fn test_fee_deducted_and_sent_to_treasury_on_release() {
         &None,
         &false,
         &None,
+        &None, // payee: defaults to single-payee mode (creator)
     );
     client.deposit(&split_id, &participant, &10_000);
     client.release_funds(&split_id);
@@ -110,6 +111,7 @@ fn test_admin_can_update_fee_and_treasury() {
         &None,
         &false,
         &None,
+        &None, // payee: defaults to single-payee mode (creator)
     );
     client.deposit(&split_a, &participant, &1_000);
     client.release_funds(&split_a);
@@ -131,6 +133,7 @@ fn test_admin_can_update_fee_and_treasury() {
         &None,
         &false,
         &None,
+        &None, // payee: defaults to single-payee mode (creator)
     );
     client.deposit(&split_b, &participant, &2_000);
     client.release_funds(&split_b);
@@ -169,6 +172,7 @@ fn test_fees_collected_event_emitted() {
         &None,
         &false,
         &None,
+        &None, // payee: defaults to single-payee mode (creator)
     );
     client.deposit(&split_id, &participant, &1_000);
     client.release_funds(&split_id);
@@ -235,6 +239,7 @@ fn test_partial_deposits() {
         &None,
         &false,
         &None,
+        &None, // payee: defaults to single-payee mode (creator)
     );
 
     // Participant 1 pays half their obligation.
@@ -353,6 +358,7 @@ fn test_cancel_partial_refunds() {
         &None,
         &false,
         &None,
+        &None, // payee: defaults to single-payee mode (creator)
     );
 
     client.deposit(&split_id, &participant, &3_000);
@@ -394,6 +400,7 @@ fn test_toggle_whitelist_allows_creator_to_restrict_access() {
         &None,
         &false,
         &None,
+        &None, // payee: defaults to single-payee mode (creator)
     );
 
     // Default: whitelist is disabled.
@@ -431,6 +438,7 @@ fn test_create_escrow_with_metadata_stores_correctly() {
         &None,
         &false,
         &None,
+        &None, // payee: defaults to single-payee mode (creator)
     );
 
     let escrow = client.get_escrow(&split_id);
@@ -477,6 +485,7 @@ fn test_default_max_participants_is_50() {
         &None,
         &false,
         &None,
+        &None, // payee: defaults to single-payee mode (creator)
     );
     let escrow = client.get_escrow(&escrow_id);
     assert_eq!(escrow.max_participants, 50);
@@ -500,6 +509,7 @@ fn test_explicit_max_participants_stored_in_get_escrow() {
         &Some(cap),
         &false,
         &None,
+        &None, // payee: defaults to single-payee mode (creator)
     );
     let escrow = client.get_escrow(&escrow_id);
     assert_eq!(escrow.max_participants, cap);
@@ -530,6 +540,7 @@ fn test_deposit_rejected_when_participant_cap_exceeded() {
         &Some(2u32),
         &false,
         &None,
+        &None, // payee: defaults to single-payee mode (creator)
     );
 
     client.deposit(&escrow_id, &p1, &1_000);
@@ -562,6 +573,7 @@ fn test_existing_participant_can_deposit_again_without_increasing_count() {
         &Some(1u32),
         &false,
         &None,
+        &None, // payee: defaults to single-payee mode (creator)
     );
     client.deposit(&escrow_id, &p1, &1_000);
     client.deposit(&escrow_id, &p1, &1_000);
@@ -587,6 +599,7 @@ fn test_note_stored_on_create_and_get_note() {
         &None,
         &false,
         &Some(String::from_str(&env, text)),
+        &None, // payee: defaults to single-payee mode (creator)
     );
     assert_eq!(client.get_note(&split_id), String::from_str(&env, text));
     assert_eq!(
@@ -612,6 +625,7 @@ fn test_creator_can_update_note_while_pending_and_ready() {
         &None,
         &false,
         &None,
+        &None, // payee: defaults to single-payee mode (creator)
     );
     client.set_note(&split_id, &String::from_str(&env, "v1"));
     assert_eq!(client.get_note(&split_id), String::from_str(&env, "v1"));
@@ -648,6 +662,7 @@ fn test_note_over_128_bytes_rejected_on_create_and_set() {
         &None,
         &false,
         &Some(long.clone()),
+        &None, // payee: defaults to single-payee mode (creator)
     );
     assert!(res.is_err());
 
@@ -663,6 +678,7 @@ fn test_note_over_128_bytes_rejected_on_create_and_set() {
         &None,
         &false,
         &None,
+        &None, // payee: defaults to single-payee mode (creator)
     );
     let res2 = client.try_set_note(&split_id, &long);
     assert!(res2.is_err());
@@ -682,6 +698,7 @@ fn test_note_updated_emits_event() {
         &None,
         &false,
         &None,
+        &None, // payee: defaults to single-payee mode (creator)
     );
     let before = env.events().all().len();
     client.set_note(&split_id, &String::from_str(&env, "hello"));
@@ -702,6 +719,7 @@ fn test_cancel_split() {
         &None,
         &false,
         &None,
+        &None, // payee: defaults to single-payee mode (creator)
     );
     client.cancel_split(&split_id);
 
@@ -740,6 +758,7 @@ fn test_create_escrow_zero_amount() {
         &None,
         &false,
         &None,
+        &None, // payee: defaults to single-payee mode (creator)
     );
     assert!(res.is_err());
     // Error::InvalidAmount = 4 => HostError: Error(Contract, #4)
@@ -761,6 +780,7 @@ fn test_create_escrow_zero_obligation() {
         &None,
         &false,
         &None,
+        &None, // payee: defaults to single-payee mode (creator)
     );
     assert!(res.is_err());
 }
@@ -781,6 +801,116 @@ fn test_create_escrow_negative_obligation() {
         &None,
         &false,
         &None,
+        &None, // payee: defaults to single-payee mode (creator)
     );
     assert!(res.is_err());
+}
+
+#[test]
+fn test_release_distributes_per_participant() {
+    let (env, client, _admin, creator, p1, token_client, token_admin) = setup();
+    let p2 = Address::generate(&env);
+    token_admin.mint(&p2, &1_000_000);
+    let payee = Address::generate(&env);
+
+    let mut obligations = Map::new(&env);
+    obligations.set(p1.clone(), 7_000);
+    obligations.set(p2.clone(), 3_000);
+
+    let split_id = client.create_escrow(
+        &creator,
+        &String::from_str(&env, "Custom payee"),
+        &10_000,
+        &Map::new(&env),
+        &obligations,
+        &None,
+        &false,
+        &None,
+        &Some(payee.clone()),
+    );
+
+    client.deposit(&split_id, &p1, &7_000);
+    client.deposit(&split_id, &p2, &3_000);
+
+    let before = env.events().all().len();
+    client.release_funds(&split_id);
+    let after = env.events().all().len();
+    // One FundsReleased(participant) event per participant + one summary event.
+    assert!(after - before >= 3);
+
+    // All funds land on the configured payee, regardless of how many
+    // participants contributed, and the contract holds nothing back.
+    assert_eq!(token_client.balance(&payee), 10_000);
+    assert_eq!(token_client.balance(&creator), 1_000_000);
+
+    let escrow = client.get_escrow(&split_id);
+    assert_eq!(escrow.status, SplitStatus::Released);
+    assert_eq!(escrow.payee, Some(payee));
+}
+
+#[test]
+fn test_release_single_payee_mode_defaults_to_creator() {
+    let (env, client, _admin, creator, p1, token_client, token_admin) = setup();
+    let p2 = Address::generate(&env);
+    token_admin.mint(&p2, &1_000_000);
+
+    let mut obligations = Map::new(&env);
+    obligations.set(p1.clone(), 6_000);
+    obligations.set(p2.clone(), 4_000);
+
+    let split_id = client.create_escrow(
+        &creator,
+        &String::from_str(&env, "Default payee"),
+        &10_000,
+        &Map::new(&env),
+        &obligations,
+        &None,
+        &false,
+        &None,
+        &None, // payee omitted -> single-payee mode, creator receives funds
+    );
+
+    client.deposit(&split_id, &p1, &6_000);
+    client.deposit(&split_id, &p2, &4_000);
+    client.release_funds(&split_id);
+
+    assert_eq!(token_client.balance(&creator), 1_000_000 + 10_000);
+    assert_eq!(client.get_escrow(&split_id).payee, None);
+}
+
+#[test]
+fn test_release_with_fee_distributes_net_amount_proportionally() {
+    let (env, client, _admin, creator, p1, token_client, token_admin) = setup();
+    let p2 = Address::generate(&env);
+    token_admin.mint(&p2, &1_000_000);
+    let payee = Address::generate(&env);
+    let treasury = Address::generate(&env);
+    client.set_treasury(&treasury);
+    client.set_fee(&1000u32); // 10%
+
+    let mut obligations = Map::new(&env);
+    obligations.set(p1.clone(), 6_000);
+    obligations.set(p2.clone(), 4_000);
+
+    let split_id = client.create_escrow(
+        &creator,
+        &String::from_str(&env, "Fee aware"),
+        &10_000,
+        &Map::new(&env),
+        &obligations,
+        &None,
+        &false,
+        &None,
+        &Some(payee.clone()),
+    );
+
+    client.deposit(&split_id, &p1, &6_000);
+    client.deposit(&split_id, &p2, &4_000);
+    client.release_funds(&split_id);
+
+    // 10% fee on the 10,000 total goes to the treasury; the remaining 9,000
+    // is distributed to the payee across both participants' shares with no
+    // funds left behind in the contract.
+    assert_eq!(token_client.balance(&treasury), 1_000);
+    assert_eq!(token_client.balance(&payee), 9_000);
 }

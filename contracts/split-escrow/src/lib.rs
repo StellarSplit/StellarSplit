@@ -102,6 +102,8 @@ impl SplitEscrowContract {
 
     /// Create an escrow split. If `max_participants` is `None`, the cap defaults to 50.
     /// `metadata` must satisfy map size and string length limits. If `note` is `None`, note is empty.
+    /// `payee` selects single-payee mode: when `None`, every participant's released share goes
+    /// to `creator` (original behavior); when `Some(addr)`, it goes to `addr` instead.
     pub fn create_escrow(
         env: Env,
         creator: Address,
@@ -112,6 +114,7 @@ impl SplitEscrowContract {
         max_participants: Option<u32>,
         whitelist_enabled: bool,
         note: Option<String>,
+        payee: Option<Address>,
     ) -> Result<u64, Error> {
         if !storage::has_admin(&env) {
             return Err(Error::NotInitialized);
@@ -167,6 +170,7 @@ impl SplitEscrowContract {
             deposits: Map::new(&env),
             obligations,
             note: note_stored,
+            payee,
         };
         storage::set_split(&env, &split);
         storage::set_whitelist_enabled(&env, split_id, whitelist_enabled);
@@ -357,6 +361,10 @@ impl SplitEscrowContract {
         Ok(())
     }
 
+    /// Finalize a `Ready` split: collects the protocol fee (if any), then pays out each
+    /// participant's share of the remaining balance to the split's payee (or `creator` in
+    /// single-payee mode). Emits one `FundsReleasedToParticipant` event per participant plus
+    /// one summary `FundsReleased` event for the total net amount distributed.
     pub fn release_funds(env: Env, split_id: u64) -> Result<(), Error> {
         let mut split = storage::get_split(&env, split_id).ok_or(Error::SplitNotFound)?;
         // Only the split creator can finalize settlement.
@@ -367,19 +375,48 @@ impl SplitEscrowContract {
 
         let total = split.deposited_amount;
         let fee_amount = fees::collect_fee(&env, total)?;
-        let creator_amount = total - fee_amount;
+        let net_total = total - fee_amount;
 
         let token_address = storage::get_token(&env);
         let token_client = token::Client::new(&env, &token_address);
-        token_client.transfer(
-            &env.current_contract_address(),
-            &split.creator,
-            &creator_amount,
-        );
+
+        // Single-payee mode: every participant's share lands on `payee` if the
+        // creator configured one, otherwise on `creator` itself (this matches
+        // the contract's original, pre-fix behavior when `payee` is `None`).
+        let payee = split.payee.clone().unwrap_or_else(|| split.creator.clone());
+
+        // At this point split.status == Ready, which only happens once
+        // deposited_amount == total_amount. Since every participant's balance
+        // is capped at their obligation and balances sum to deposited_amount,
+        // every participant's balance is exactly equal to their obligation —
+        // so iterating obligations here is equivalent to iterating balances.
+        let keys = split.obligations.keys();
+        let num_keys = keys.len();
+        let mut distributed = 0i128;
+        for i in 0..num_keys {
+            let participant = keys.get(i).unwrap();
+            let obligation = split.obligations.get(participant.clone()).unwrap();
+
+            // Split net_total proportionally to each participant's obligation.
+            // The last participant absorbs the rounding remainder so the full
+            // net_total is always paid out, even when fees introduce integer
+            // division dust.
+            let share = if i + 1 == num_keys {
+                net_total - distributed
+            } else {
+                (obligation * net_total) / total
+            };
+            distributed += share;
+
+            if share > 0 {
+                token_client.transfer(&env.current_contract_address(), &payee, &share);
+                events::emit_funds_released_to_participant(&env, split_id, &participant, share);
+            }
+        }
 
         split.status = SplitStatus::Released;
         storage::set_split(&env, &split);
-        events::emit_released(&env, split_id, creator_amount);
+        events::emit_released(&env, split_id, net_total);
         Ok(())
     }
 
