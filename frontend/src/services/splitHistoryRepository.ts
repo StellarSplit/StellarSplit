@@ -63,8 +63,30 @@ const FALLBACK_SPLITS: HistorySplit[] = [
   },
 ];
 
+ export interface HistoryFilters {
+  statuses?: SplitStatus[];
+  role?: SplitRole | "all";
+  search?: string;
+  sort?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface HistoryResponse {
+  data: HistorySplit[];
+  source: "api" | "fixture";
+  meta: {
+    page: number;
+    limit: number;
+    totalItems: number;
+    totalPages: number;
+    totalCompleted: number;
+    totalPending: number;
+  };
+}
+
 export interface SplitHistoryRepository {
-  list(): Promise<{ data: HistorySplit[]; source: "api" | "fixture" }>;
+  fetchHistory(filters: HistoryFilters): Promise<HistoryResponse>;
 }
 
 class ApiSplitHistoryRepository implements SplitHistoryRepository {

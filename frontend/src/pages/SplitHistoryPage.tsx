@@ -47,7 +47,13 @@ function useSplitHistory() {
 
 export default function SplitHistoryPage() {
   const { t } = useTranslation();
-  const { splits, loading, source } = useSplitHistory();
+  const repository = getSplitHistoryRepository();
+
+const [splits, setSplits] = useState<HistorySplit[]>([]);
+const [loading, setLoading] = useState(true);
+const [source, setSource] = useState<"api" | "fixture">("api");
+
+const [searchParams, setSearchParams] = useSearchParams();
   const [filters, setFilters] = useState<FiltersState>({
     statuses: new Set<SplitStatus>(["active", "completed", "cancelled"]),
     role: "all",
