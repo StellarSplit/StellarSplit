@@ -17,10 +17,13 @@ mod types;
 #[cfg(test)]
 mod test;
 
-use crate::types::{Asset, Error};
+use crate::types::{Asset, Error, PathIntent};
 
 /// Maximum path length (number of hops + 1 = number of assets in path).
 const MAX_PATH_LEN: u32 = 6;
+
+/// Maximum allowed staleness for path intents (default 30 ledgers).
+const MAX_PATH_STALENESS_LEDGERS: u32 = 30;
 
 #[contract]
 pub struct PathPaymentContract;
@@ -74,11 +77,13 @@ impl PathPaymentContract {
 
     /// Find a payment path from source_asset to dest_asset using registered pairs (BFS).
     /// Returns path as [source_asset, ..., dest_asset] or Error::PathNotFound.
+    /// Also stores a path intent with discovery ledger for time-bound execution.
     pub fn find_payment_path(
         env: Env,
         source_asset: Asset,
         dest_asset: Asset,
         _amount: i128,
+        split_id: String,
     ) -> Result<Vec<Asset>, Error> {
         if !storage::is_initialized(&env) {
             return Err(Error::NotInitialized);
@@ -87,7 +92,13 @@ impl PathPaymentContract {
         let dest = dest_asset.address().clone();
         if source == dest {
             let mut path = Vec::new(&env);
-            path.push_back(source_asset);
+            path.push_back(source_asset.clone());
+            let intent = PathIntent {
+                path: path.clone(),
+                discovered_ledger: env.ledger().sequence(),
+                split_id: split_id.clone(),
+            };
+            storage::store_path_intent(&env, &split_id, &intent);
             return Ok(path);
         }
         let pairs = storage::get_pair_list(&env);
@@ -138,6 +149,13 @@ impl PathPaymentContract {
         if path.len() > MAX_PATH_LEN {
             return Err(Error::InvalidPath);
         }
+        // Store path intent for time-bound execution
+        let intent = PathIntent {
+            path: path.clone(),
+            discovered_ledger: env.ledger().sequence(),
+            split_id: split_id.clone(),
+        };
+        storage::store_path_intent(&env, &split_id, &intent);
         events::emit_path_found(&env, &source, &dest, &path);
         Ok(path)
     }
@@ -157,8 +175,8 @@ impl PathPaymentContract {
     }
 
     /// Execute path payment: pull source amount from caller, convert along path, enforce max_slippage.
-    /// split_id: identifier for the split (for event/logging).
-    /// path: [source_asset, ..., dest_asset].
+    /// Uses stored path intent to validate staleness and per-step rate deviation.
+    /// split_id: identifier for the split (must match stored intent from find_payment_path).
     /// amount_in: amount of path[0] to pull from caller (caller must approve).
     /// max_slippage: basis points (e.g. 100 = 1%). Returns amount of dest_asset received.
     /// Caller must authorize and approve transfer of amount_in of path[0].
@@ -166,18 +184,17 @@ impl PathPaymentContract {
         env: Env,
         caller: Address,
         split_id: String,
-        path: Vec<Asset>,
+        _path: Vec<Asset>,
         amount_in: i128,
         max_slippage: u32,
     ) -> Result<i128, Error> {
-        Self::execute_path_payment_internal(env, caller, split_id, path, amount_in, max_slippage)
+        Self::execute_path_payment_internal(env, caller, split_id, amount_in, max_slippage)
     }
 
     fn execute_path_payment_internal(
         env: Env,
         caller: Address,
         split_id: String,
-        path: Vec<Asset>,
         amount_in: i128,
         max_slippage: u32,
     ) -> Result<i128, Error> {
@@ -185,6 +202,20 @@ impl PathPaymentContract {
         if !storage::is_initialized(&env) {
             return Err(Error::NotInitialized);
         }
+
+        // Retrieve and validate path intent
+        let intent = storage::get_path_intent(&env, &split_id).ok_or(Error::PathNotFound)?;
+        let path = &intent.path;
+
+        // Check path staleness - fail if discovered more than MAX_PATH_STALENESS_LEDGERS ago
+        let current_ledger = env.ledger().sequence();
+        let staleness = current_ledger
+            .checked_sub(intent.discovered_ledger)
+            .unwrap_or(u32::MAX);
+        if staleness > MAX_PATH_STALENESS_LEDGERS {
+            return Err(Error::PathExpired);
+        }
+
         if path.is_empty() {
             return Err(Error::InvalidPath);
         }
@@ -199,7 +230,7 @@ impl PathPaymentContract {
         let source_addr = source.address().clone();
         let dest_addr = dest.address().clone();
 
-        let expected_dest = Self::simulate_path_amount(&env, &path, amount_in)?;
+        let expected_dest = Self::simulate_path_amount(&env, path, amount_in)?;
         if expected_dest <= 0 {
             return Err(Error::RateNotAvailable);
         }
@@ -241,12 +272,29 @@ impl PathPaymentContract {
             }
         };
         for i in 0..path.len() - 1 {
+            let from_asset = path.get(i).unwrap();
             let to_asset = path.get(i + 1).unwrap();
             let to_addr = to_asset.address().clone();
             let amount_out =
                 Self::invoke_swap(&env, &router, &current_asset, &to_addr, current_amount);
+
             match amount_out {
                 Ok(out) if out > 0 => {
+                    // Per-step rate deviation check
+                    let expected_out = Self::simulate_step_amount(
+                        &env,
+                        &current_asset,
+                        &to_addr,
+                        current_amount,
+                    )?;
+                    Self::check_step_slippage(
+                        &env,
+                        &current_asset,
+                        &to_addr,
+                        current_amount,
+                        out,
+                        max_slippage,
+                    )?;
                     current_amount = out;
                     current_asset = to_addr;
                 }
@@ -354,5 +402,41 @@ impl PathPaymentContract {
             (from.clone(), to.clone(), amount).into_val(env),
         );
         Ok(result)
+    }
+
+    /// Simulate a single swap step: returns expected output amount.
+    fn simulate_step_amount(
+        env: &Env,
+        from: &Address,
+        to: &Address,
+        amount_in: i128,
+    ) -> Result<i128, Error> {
+        let rate = storage::get_rate(env, from, to).ok_or(Error::RateNotAvailable)?;
+        let amount_out = (amount_in * rate) / 10_000_000;
+        if amount_out <= 0 {
+            return Err(Error::RateNotAvailable);
+        }
+        Ok(amount_out)
+    }
+
+    /// Check per-step slippage: actual_out must be within tolerance of expected_out.
+    fn check_step_slippage(
+        _env: &Env,
+        from: &Address,
+        to: &Address,
+        amount_in: i128,
+        actual_out: i128,
+        max_slippage_bps: u32,
+    ) -> Result<(), Error> {
+        let expected_out = match Self::simulate_step_amount(_env, from, to, amount_in) {
+            Ok(out) => out,
+            Err(_) => return Err(Error::RateNotAvailable),
+        };
+        // Calculate min acceptable output with slippage tolerance
+        let min_step_out = (expected_out * (10000i128 - max_slippage_bps as i128)) / 10000;
+        if actual_out < min_step_out {
+            return Err(Error::SlippageExceeded);
+        }
+        Ok(())
     }
 }

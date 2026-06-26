@@ -1,6 +1,6 @@
 //! Types for path-payment contract: Asset and errors.
 
-use soroban_sdk::{contracterror, contracttype, Address};
+use soroban_sdk::{contracterror, contracttype, Address, Env, String, Vec};
 
 /// Stellar asset represented as a Soroban token contract address.
 #[contracttype]
@@ -19,6 +19,19 @@ impl Asset {
 pub struct AssetPair {
     pub from: Address,
     pub to: Address,
+}
+
+/// Path intent created during find_payment_path with discovery metadata.
+/// Used for time-bound execution to prevent front-running attacks.
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct PathIntent {
+    /// The discovered path from source to destination asset.
+    pub path: Vec<Asset>,
+    /// Ledger number when the path was discovered.
+    pub discovered_ledger: u32,
+    /// Optional split ID for tracking purposes.
+    pub split_id: String,
 }
 
 /// Errors for path payment operations.

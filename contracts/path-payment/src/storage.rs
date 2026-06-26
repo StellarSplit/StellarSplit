@@ -1,8 +1,8 @@
 //! Storage for path-payment contract: pairs, rates, admin, swap router.
 
-use soroban_sdk::{contracttype, Address, Env, Vec};
+use soroban_sdk::{contracttype, Address, Env, String, Vec};
 
-use crate::types::AssetPair;
+use crate::types::{AssetPair, PathIntent};
 
 #[contracttype]
 #[derive(Clone)]
@@ -15,6 +15,8 @@ pub enum DataKey {
     Pair(Address, Address),
     /// Conversion rate from_asset -> to_asset (amount_out per 1e7 amount_in)
     Rate(Address, Address),
+    /// Path intent stored by split_id for time-bound execution.
+    PathIntent(String),
 }
 
 const LEDGER_TTL_PERSISTENT: u32 = 31_536_000;
@@ -134,4 +136,28 @@ pub fn add_pair(env: &Env, from: &Address, to: &Address) {
         to: to.clone(),
     });
     set_pair_list(env, &list);
+}
+
+/// Default maximum staleness for path intents (in ledgers).
+pub const DEFAULT_MAX_PATH_STALENESS_LEDGERS: u32 = 30;
+
+/// Store a path intent for time-bound execution.
+pub fn store_path_intent(env: &Env, split_id: &String, intent: &PathIntent) {
+    let key = DataKey::PathIntent(split_id.clone());
+    env.storage().persistent().set(&key, intent);
+    env.storage().persistent().extend_ttl(
+        &key,
+        LEDGER_TTL_THRESHOLD,
+        LEDGER_TTL_PERSISTENT,
+    );
+}
+
+/// Retrieve a stored path intent.
+pub fn get_path_intent(env: &Env, split_id: &String) -> Option<PathIntent> {
+    env.storage().persistent().get(&DataKey::PathIntent(split_id.clone()))
+}
+
+/// Check if a path intent exists.
+pub fn has_path_intent(env: &Env, split_id: &String) -> bool {
+    env.storage().persistent().has(&DataKey::PathIntent(split_id.clone()))
 }
