@@ -1,10 +1,12 @@
 #![cfg(test)]
 extern crate std;
 
+use crate::events::PartialDepositEvent;
 use crate::{SplitEscrowContract, SplitEscrowContractClient, SplitStatus};
 use soroban_sdk::token::{Client as TokenClient, StellarAssetClient as TokenAdminClient};
 use soroban_sdk::{
-    testutils::Address as _, testutils::Events as _, Address, Env, IntoVal, Map, String, Vec,
+    testutils::Address as _, testutils::Events as _, Address, Env, FromVal, IntoVal, Map, String,
+    Vec,
 };
 
 fn metadata_map(env: &Env, entries: &[(&str, &str)]) -> Map<String, String> {
@@ -246,12 +248,19 @@ fn test_partial_deposits() {
     assert_eq!(escrow.status, SplitStatus::Pending);
     assert_eq!(escrow.deposited_amount, 2_500);
     assert_eq!(escrow.balances.get(participant.clone()).unwrap(), 2_500);
+    assert_eq!(escrow.deposits.get(participant.clone()).unwrap(), 2_500);
+
+    let balance = client.get_participant_balance(&split_id, &participant);
+    assert_eq!(balance.deposited, 2_500);
+    assert_eq!(balance.owed, 5_000);
+    assert_eq!(balance.remaining, 2_500);
 
     // Participant 1 pays the rest of their obligation.
     client.deposit(&split_id, &participant, &2_500);
     let escrow = client.get_escrow(&split_id);
     assert_eq!(escrow.deposited_amount, 5_000);
     assert_eq!(escrow.balances.get(participant.clone()).unwrap(), 5_000);
+    assert_eq!(escrow.deposits.get(participant.clone()).unwrap(), 5_000);
     assert_eq!(escrow.status, SplitStatus::Pending); // Still pending because p2 hasn't paid.
 
     // Participant 2 pays their full obligation.
@@ -263,6 +272,70 @@ fn test_partial_deposits() {
     client.release_funds(&split_id);
     assert_eq!(client.get_escrow(&split_id).status, SplitStatus::Released);
     assert_eq!(token_client.balance(&creator), 1_000_000 + 10_000);
+}
+
+#[test]
+fn test_partial_deposit_balance_view_and_threshold_events() {
+    let (env, client, _admin, creator, participant, _token_client, _) = setup();
+
+    let mut obligations = Map::new(&env);
+    obligations.set(participant.clone(), 200);
+
+    let split_id = client.create_escrow(
+        &creator,
+        &String::from_str(&env, "Installments"),
+        &200,
+        &Map::new(&env),
+        &obligations,
+        &None,
+        &false,
+        &None,
+    );
+
+    client.deposit(&split_id, &participant, &50);
+    let balance = client.get_participant_balance(&split_id, &participant);
+    assert_eq!(balance.deposited, 50);
+    assert_eq!(balance.owed, 200);
+    assert_eq!(balance.remaining, 150);
+
+    client.deposit(&split_id, &participant, &50);
+    let half_event = env.events().all().last().unwrap();
+    assert_eq!(half_event.0, client.address);
+    assert_eq!(
+        half_event.1,
+        ("PartialDepositEvent", "split_id", "participant").into_val(&env)
+    );
+    let half_payload = PartialDepositEvent::from_val(&env, &half_event.2);
+    assert_eq!(
+        half_payload,
+        PartialDepositEvent {
+            split_id,
+            participant: participant.clone(),
+            deposited: 100,
+            owed: 200,
+            threshold_percent: 50,
+        }
+    );
+
+    client.deposit(&split_id, &participant, &100);
+    let full_event = env.events().all().last().unwrap();
+    let full_payload = PartialDepositEvent::from_val(&env, &full_event.2);
+    assert_eq!(
+        full_payload,
+        PartialDepositEvent {
+            split_id,
+            participant: participant.clone(),
+            deposited: 200,
+            owed: 200,
+            threshold_percent: 100,
+        }
+    );
+
+    let balance = client.get_participant_balance(&split_id, &participant);
+    assert_eq!(balance.deposited, 200);
+    assert_eq!(balance.owed, 200);
+    assert_eq!(balance.remaining, 0);
+    assert_eq!(client.get_escrow(&split_id).status, SplitStatus::Ready);
 }
 
 #[test]

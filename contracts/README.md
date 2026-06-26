@@ -111,7 +111,7 @@ cd contracts
 cargo test --workspace
 
 # Run tests for a specific contract
-cargo test -p staking-governance
+cargo test -p staking
 cargo test -p split-template
 
 # Or use the CI script

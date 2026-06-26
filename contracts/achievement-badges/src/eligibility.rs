@@ -8,21 +8,21 @@ use crate::BadgeEvidence;
 #[derive(Clone, Debug, PartialEq)]
 pub struct EligibilityResult {
     pub is_eligible: bool,
-    pub tier: Symbol,        // "none" | "bronze" | "silver" | "gold"
-    pub reason: Symbol,      // short machine-readable code
+    pub tier: Symbol,   // "none" | "bronze" | "silver" | "gold"
+    pub reason: Symbol, // short machine-readable code
 }
 
 // ─── Thresholds ──────────────────────────────────────────────────────────────
 
 /// Minimum on-chain split amount (in stroops / base units) per tier.
-const GOLD_MIN_AMOUNT: i128   = 10_000_000_000; // 10 000 XLM-equivalent
-const SILVER_MIN_AMOUNT: i128 =  1_000_000_000; //  1 000 XLM-equivalent
-const BRONZE_MIN_AMOUNT: i128 =    100_000_000; //    100 XLM-equivalent
+const GOLD_MIN_AMOUNT: i128 = 10_000_000_000; // 10 000 XLM-equivalent
+const SILVER_MIN_AMOUNT: i128 = 1_000_000_000; //  1 000 XLM-equivalent
+const BRONZE_MIN_AMOUNT: i128 = 100_000_000; //    100 XLM-equivalent
 
 /// Minimum participant count per tier.
-const GOLD_MIN_PARTICIPANTS: u32   = 10;
-const SILVER_MIN_PARTICIPANTS: u32 =  5;
-const BRONZE_MIN_PARTICIPANTS: u32 =  2;
+const GOLD_MIN_PARTICIPANTS: u32 = 10;
+const SILVER_MIN_PARTICIPANTS: u32 = 5;
+const BRONZE_MIN_PARTICIPANTS: u32 = 2;
 
 /// Minimum completion rate (0–100) required for any badge.
 const MIN_COMPLETION_RATE: u32 = 80;
@@ -54,7 +54,7 @@ pub fn evaluate_eligibility(env: &Env, evidence: &BadgeEvidence) -> EligibilityR
     }
 
     // Determine tier (highest matching wins)
-    if evidence.total_split_amount  >= GOLD_MIN_AMOUNT
+    if evidence.total_split_amount >= GOLD_MIN_AMOUNT
         && evidence.participant_count >= GOLD_MIN_PARTICIPANTS
     {
         return EligibilityResult {
@@ -64,7 +64,7 @@ pub fn evaluate_eligibility(env: &Env, evidence: &BadgeEvidence) -> EligibilityR
         };
     }
 
-    if evidence.total_split_amount  >= SILVER_MIN_AMOUNT
+    if evidence.total_split_amount >= SILVER_MIN_AMOUNT
         && evidence.participant_count >= SILVER_MIN_PARTICIPANTS
     {
         return EligibilityResult {
@@ -74,7 +74,7 @@ pub fn evaluate_eligibility(env: &Env, evidence: &BadgeEvidence) -> EligibilityR
         };
     }
 
-    if evidence.total_split_amount  >= BRONZE_MIN_AMOUNT
+    if evidence.total_split_amount >= BRONZE_MIN_AMOUNT
         && evidence.participant_count >= BRONZE_MIN_PARTICIPANTS
     {
         return EligibilityResult {

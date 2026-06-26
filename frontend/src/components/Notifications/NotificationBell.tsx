@@ -2,14 +2,13 @@ import { useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Bell } from "lucide-react";
 import { useDisclosure } from "../../hooks/useDisclosure";
-import { useNotificationsStore } from "../../store/notifications";
+import { useNotificationsStore, selectUnreadCount } from "../../store/notifications";
 import { NotificationDropdown } from "./NotificationDropdown";
 
 export function NotificationBell() {
   const { isOpen, onToggle, onClose } = useDisclosure(false);
-  const unreadCount = useNotificationsStore((state) =>
-    state.notifications.filter((n) => !n.read).length
-  );
+  const hasHydrated = useNotificationsStore((state) => state.hasHydrated);
+  const unreadCount = useNotificationsStore(selectUnreadCount);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -27,6 +26,8 @@ export function NotificationBell() {
     }
   }, [isOpen, onClose]);
 
+  const visibleCount = hasHydrated ? unreadCount : 0;
+
   return (
     <div className="relative" ref={containerRef}>
       <Link
@@ -36,18 +37,18 @@ export function NotificationBell() {
           e.preventDefault();
           onToggle();
         }}
-        aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ""}`}
+        aria-label={`Notifications${visibleCount > 0 ? `, ${visibleCount} unread` : ""}`}
         aria-expanded={isOpen}
         aria-haspopup="true"
         data-testid="notification-bell"
       >
         <Bell className="w-5 h-5" />
-        {unreadCount > 0 && (
+        {visibleCount > 0 && (
           <span
             className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-accent text-white text-xs font-medium"
             data-testid="notification-badge"
           >
-            {unreadCount > 99 ? "99+" : unreadCount}
+            {visibleCount > 99 ? "99+" : visibleCount}
           </span>
         )}
       </Link>

@@ -10,7 +10,7 @@ mod test;
 mod types;
 
 pub use crate::errors::Error;
-pub use crate::types::{Split, SplitStatus};
+pub use crate::types::{ParticipantBalance, Split, SplitStatus};
 
 const DEFAULT_MAX_PARTICIPANTS: u32 = 50;
 const MAX_NOTE_LEN: u32 = 128;
@@ -167,6 +167,7 @@ impl SplitEscrowContract {
             max_participants: cap,
             participants,
             balances: Map::new(&env),
+            deposits: Map::new(&env),
             obligations,
             note: note_stored,
             payee,
@@ -216,8 +217,8 @@ impl SplitEscrowContract {
             let amount = split.balances.get(participant.clone()).unwrap_or(0i128);
             if amount > 0 {
                 token_client.transfer(&env.current_contract_address(), &participant, &amount);
-                // Zero out balances to prevent accidental double-refund.
-                split.balances.set(participant, 0i128);
+                split.balances.set(participant.clone(), 0i128);
+                split.deposits.set(participant, 0i128);
             }
             i += 1;
         }
@@ -267,12 +268,19 @@ impl SplitEscrowContract {
             return Err(Error::InvalidAmount);
         }
 
-        if split.deposited_amount + amount > split.total_amount {
+        let updated_total_deposit = split
+            .deposited_amount
+            .checked_add(amount)
+            .ok_or(Error::InvalidAmount)?;
+        if updated_total_deposit > split.total_amount {
             return Err(Error::InvalidAmount);
         }
 
-        let previous_balance = split.balances.get(participant.clone()).unwrap_or(0i128);
-        if previous_balance + amount > obligation {
+        let previous_deposit = split.deposits.get(participant.clone()).unwrap_or(0i128);
+        let updated_deposit = previous_deposit
+            .checked_add(amount)
+            .ok_or(Error::InvalidAmount)?;
+        if updated_deposit > obligation {
             return Err(Error::InvalidAmount);
         }
 
@@ -283,22 +291,53 @@ impl SplitEscrowContract {
             split.participants.push_back(participant.clone());
         }
 
-        split
-            .balances
-            .set(participant.clone(), previous_balance + amount);
+        split.deposits.set(participant.clone(), updated_deposit);
+        split.balances.set(participant.clone(), updated_deposit);
 
         let token_address = storage::get_token(&env);
         let token_client = token::Client::new(&env, &token_address);
         token_client.transfer(&participant, &env.current_contract_address(), &amount);
 
-        split.deposited_amount += amount;
-        if split.deposited_amount == split.total_amount {
+        split.deposited_amount = updated_total_deposit;
+        if split.deposited_amount >= split.total_amount {
             split.status = SplitStatus::Ready;
         }
 
         storage::set_split(&env, &split);
         events::emit_deposit(&env, split_id, &participant, amount);
+        emit_deposit_thresholds(
+            &env,
+            split_id,
+            &participant,
+            previous_deposit,
+            updated_deposit,
+            obligation,
+        );
         Ok(())
+    }
+
+    pub fn get_participant_balance(
+        env: Env,
+        split_id: u64,
+        participant: Address,
+    ) -> Result<ParticipantBalance, Error> {
+        let split = storage::get_split(&env, split_id).ok_or(Error::SplitNotFound)?;
+        let owed = split
+            .obligations
+            .get(participant.clone())
+            .ok_or(Error::ParticipantNotOwed)?;
+        let deposited = split.deposits.get(participant).unwrap_or(0i128);
+        let remaining = if deposited >= owed {
+            0i128
+        } else {
+            owed - deposited
+        };
+
+        Ok(ParticipantBalance {
+            deposited,
+            owed,
+            remaining,
+        })
     }
 
     pub fn add_to_whitelist(env: Env, split_id: u64, address: Address) -> Result<(), Error> {
@@ -427,6 +466,38 @@ impl SplitEscrowContract {
         split.metadata = metadata;
         storage::set_split(&env, &split);
         Ok(())
+    }
+}
+
+fn emit_deposit_thresholds(
+    env: &Env,
+    split_id: u64,
+    participant: &Address,
+    previous_deposit: i128,
+    updated_deposit: i128,
+    obligation: i128,
+) {
+    let half_obligation = obligation / 2;
+    if previous_deposit < half_obligation && updated_deposit >= half_obligation {
+        events::emit_partial_threshold_reached(
+            env,
+            split_id,
+            participant,
+            updated_deposit,
+            obligation,
+            50u32,
+        );
+    }
+
+    if previous_deposit < obligation && updated_deposit >= obligation {
+        events::emit_partial_threshold_reached(
+            env,
+            split_id,
+            participant,
+            updated_deposit,
+            obligation,
+            100u32,
+        );
     }
 }
 

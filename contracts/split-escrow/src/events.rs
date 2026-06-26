@@ -1,6 +1,16 @@
-use soroban_sdk::{Address, Env, String, Symbol};
+use soroban_sdk::{contracttype, Address, Env, String, Symbol};
 
 use crate::types::Split;
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct PartialDepositEvent {
+    pub split_id: u64,
+    pub participant: Address,
+    pub deposited: i128,
+    pub owed: i128,
+    pub threshold_percent: u32,
+}
 
 pub fn emit_initialized(env: &Env, admin: &Address) {
     env.events().publish(("init", "admin"), admin.clone());
@@ -27,9 +37,26 @@ pub fn emit_deposit(env: &Env, split_id: u64, participant: &Address, amount: i12
     );
 }
 
-/// Summary event: total net amount (after fees) distributed across all
-/// participants for this split. Emitted once per `release_funds` call,
-/// alongside one `emit_funds_released_to_participant` event per participant.
+pub fn emit_partial_threshold_reached(
+    env: &Env,
+    split_id: u64,
+    participant: &Address,
+    deposited: i128,
+    owed: i128,
+    threshold_percent: u32,
+) {
+    let event = PartialDepositEvent {
+        split_id,
+        participant: participant.clone(),
+        deposited,
+        owed,
+        threshold_percent,
+    };
+
+    env.events()
+        .publish(("PartialDepositEvent", "split_id", "participant"), event);
+}
+
 pub fn emit_released(env: &Env, split_id: u64, released_amount: i128) {
     env.events()
         .publish(("released", "split_id"), (split_id, released_amount));

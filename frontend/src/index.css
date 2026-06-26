@@ -46,6 +46,12 @@
   --color-border: var(--color-border-light);
   --color-accent: var(--color-primary);
   --color-ring: rgba(108, 99, 255, 0.4);
+  /* Aliases for legacy App.css variable names */
+  --color-bg-theme: var(--color-bg);
+  --color-text-theme: var(--color-text);
+  --color-border-theme: var(--color-border);
+  --color-card-theme: var(--color-card);
+  --color-muted-theme: var(--color-text-muted);
 }
 
 :root.dark {
@@ -57,6 +63,12 @@
   --color-border: var(--color-border-dark);
   --color-accent: var(--color-primary-dark);
   --color-ring: rgba(139, 133, 255, 0.4);
+  /* Aliases for legacy App.css variable names */
+  --color-bg-theme: var(--color-bg);
+  --color-text-theme: var(--color-text);
+  --color-border-theme: var(--color-border);
+  --color-card-theme: var(--color-card);
+  --color-muted-theme: var(--color-text-muted);
 }
 
 html,
@@ -273,4 +285,30 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-text-muted);
+}
+
+/* ============================================================
+   SIDEBAR LINK — base + hover
+   Active state is applied via inline style in Sidebar.tsx.
+   Hover styles live here to avoid fighting with NavLink's
+   style callback (the root cause of the previous flicker).
+   ============================================================ */
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none;
+  color: var(--color-text-muted);
+  border-left: 2px solid transparent;
+  transition: all 0.15s ease;
+}
+
+.sidebar-link:hover:not([aria-current="page"]) {
+  color: var(--color-text);
+  background-color: color-mix(in srgb, var(--color-accent) 6%, transparent);
 }

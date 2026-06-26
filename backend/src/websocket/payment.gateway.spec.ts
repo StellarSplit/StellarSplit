@@ -1,9 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
+import { INestApplication, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
+import { io } from 'socket.io-client';
+import { AddressInfo } from 'net';
 import { PaymentGateway, WsJwtAuthService, WsPaymentAuthGuard, buildCorsConfig } from './payment.gateway';
+import { SocketIoAdapter } from './socket-io.adapter';
 import { AuthorizationService } from '../auth/services/authorization.service';
-import { UnauthorizedException, BadRequestException } from '@nestjs/common';
 
 describe('PaymentGateway', () => {
   let gateway: PaymentGateway;
@@ -289,5 +292,95 @@ describe('CORS Configuration', () => {
 
     const corsConfig = buildCorsConfig(configService);
     expect(corsConfig.origin).toContain('http://localhost:3000');
+  });
+});
+
+describe('WebSocket CORS integration', () => {
+  let app: INestApplication;
+  let port: number;
+  const allowedOrigin = 'http://allowed.example.com';
+
+  beforeEach(async () => {
+    const authorizationService = {
+      canAccessSplit: jest.fn().mockResolvedValue(true),
+    } as unknown as jest.Mocked<AuthorizationService>;
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        PaymentGateway,
+        WsJwtAuthService,
+        WsPaymentAuthGuard,
+        {
+          provide: AuthorizationService,
+          useValue: authorizationService,
+        },
+        {
+          provide: ConfigService,
+          useValue: new ConfigService({ JWT_SECRET: 'test-secret', NODE_ENV: 'production' }),
+        },
+      ],
+    }).compile();
+
+    app = module.createNestApplication();
+    const corsOptions = {
+      origin: [allowedOrigin],
+      credentials: true,
+      methods: ['GET', 'POST'],
+    };
+
+    app.enableCors(corsOptions);
+    app.useWebSocketAdapter(new SocketIoAdapter(app, corsOptions));
+    await app.listen(0);
+
+    const server = app.getHttpServer();
+    const address = server.address() as AddressInfo;
+    port = address?.port ?? 0;
+  });
+
+  afterEach(async () => {
+    if (app) {
+      await app.close();
+    }
+  });
+
+  it('should allow socket connections from an allowed origin', async () => {
+    const token = createTestToken('user-123', 'test-secret');
+    const client = io(`http://127.0.0.1:${port}`, {
+      transports: ['websocket'],
+      auth: { token },
+      extraHeaders: { Origin: allowedOrigin },
+      forceNew: true,
+    });
+
+    await new Promise<void>((resolve, reject) => {
+      client.on('connect', () => {
+        client.close();
+        resolve();
+      });
+      client.on('connect_error', reject);
+      setTimeout(() => reject(new Error('Socket connection timed out')), 2000);
+    });
+  });
+
+  it('should reject socket connections from a disallowed origin in production', async () => {
+    const token = createTestToken('user-123', 'test-secret');
+    const client = io(`http://127.0.0.1:${port}`, {
+      transports: ['websocket'],
+      auth: { token },
+      extraHeaders: { Origin: 'http://disallowed.example.com' },
+      forceNew: true,
+      rejectUnauthorized: false,
+    });
+
+    await expect(
+      new Promise<void>((resolve, reject) => {
+        client.on('connect', () => reject(new Error('Connection should not be allowed')));
+        client.on('connect_error', () => {
+          client.close();
+          resolve();
+        });
+        setTimeout(() => reject(new Error('Socket connection timed out')), 2000);
+      }),
+    ).resolves.toBeUndefined();
   });
 });

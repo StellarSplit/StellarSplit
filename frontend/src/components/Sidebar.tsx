@@ -1,16 +1,43 @@
 import { NavLink } from "react-router-dom";
-import { getNavigationRoutes } from "../routes/routeCatalog";
+import {
+  Home,
+  BarChart2,
+  TrendingUp,
+  Users,
+  Clock,
+  FileText,
+  Bell,
+  PlusCircle,
+  Calculator,
+} from "lucide-react";
+import { getNavigationRoutes, getToolRoutes } from "../routes/routeCatalog";
 import { LanguageSelector } from "./LanguageSelector";
+import type { ReactNode } from "react";
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+const routeIcons: Record<string, ReactNode> = {
+  home: <Home size={16} strokeWidth={1.75} />,
+  dashboard: <BarChart2 size={16} strokeWidth={1.75} />,
+  analytics: <TrendingUp size={16} strokeWidth={1.75} />,
+  "split-groups": <Users size={16} strokeWidth={1.75} />,
+  history: <Clock size={16} strokeWidth={1.75} />,
+  drafts: <FileText size={16} strokeWidth={1.75} />,
+  notifications: <Bell size={16} strokeWidth={1.75} />,
+  "create-split": <PlusCircle size={16} strokeWidth={1.75} />,
+  calculator: <Calculator size={16} strokeWidth={1.75} />,
+};
+
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
+  const navRoutes = getNavigationRoutes();
+  const toolRoutes = getToolRoutes();
+
   return (
     <>
-      {/* Backdrop — mobile only, shown when sidebar is open */}
+      {/* Backdrop — mobile only */}
       {isOpen && (
         <div
           onClick={onClose}
@@ -90,7 +117,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             </span>
           </div>
 
-          {/* Close button — visible on mobile only */}
+          {/* Close button — mobile only */}
           <button
             onClick={onClose}
             className="lg:hidden"
@@ -134,6 +161,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             gap: "0.2rem",
           }}
         >
+          {/* Main navigation */}
           <span
             style={{
               fontSize: "0.65rem",
@@ -148,55 +176,70 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             Navigation
           </span>
 
-          {getNavigationRoutes().map((route) => (
+          {navRoutes.map((route) => (
             <NavLink
               key={route.id}
               to={route.path}
               onClick={onClose}
-              style={({ isActive }) => ({
-                display: "flex",
-                alignItems: "center",
-                gap: "0.65rem",
-                padding: "0.6rem 0.75rem",
-                borderRadius: "0.5rem",
-                fontSize: "0.9rem",
-                fontWeight: 500,
-                textDecoration: "none",
-                color: isActive
-                  ? "var(--color-accent)"
-                  : "var(--color-text-muted)",
-                backgroundColor: isActive
-                  ? "color-mix(in srgb, var(--color-accent) 12%, transparent)"
-                  : "transparent",
-                borderLeft: isActive
-                  ? "2px solid var(--color-accent)"
-                  : "2px solid transparent",
-                transition: "all 0.15s ease",
-              })}
-              onMouseEnter={(e) => {
-                if (!e.currentTarget.getAttribute("aria-current")) {
-                  e.currentTarget.style.color = "var(--color-text)";
-                  e.currentTarget.style.backgroundColor =
-                    "color-mix(in srgb, var(--color-accent) 6%, transparent)";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!e.currentTarget.getAttribute("aria-current")) {
-                  e.currentTarget.style.color = "var(--color-text-muted)";
-                  e.currentTarget.style.backgroundColor = "transparent";
-                }
-              }}
+              className="sidebar-link"
+              style={({ isActive }) =>
+                isActive
+                  ? {
+                      color: "var(--color-accent)",
+                      backgroundColor:
+                        "color-mix(in srgb, var(--color-accent) 12%, transparent)",
+                      borderLeftColor: "var(--color-accent)",
+                    }
+                  : {}
+              }
             >
-              <span
-                style={{
-                  width: "6px",
-                  height: "6px",
-                  borderRadius: "50%",
-                  backgroundColor: "currentColor",
-                  opacity: 0.6,
-                  flexShrink: 0,
-                }}
-              />
+              {routeIcons[route.id]}
+              {route.label}
+            </NavLink>
+          ))}
+
+          {/* ── Divider ── */}
+          <hr
+            style={{
+              border: "none",
+              borderTop: "1px solid var(--color-border)",
+              margin: "0.75rem 0.5rem",
+            }}
+          />
+
+          {/* Tools section */}
+          <span
+            style={{
+              fontSize: "0.65rem",
+              fontWeight: 600,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              color: "var(--color-text-muted)",
+              padding: "0 0.5rem",
+              marginBottom: "0.4rem",
+            }}
+          >
+            Tools
+          </span>
+
+          {toolRoutes.map((route) => (
+            <NavLink
+              key={route.id}
+              to={route.path}
+              onClick={onClose}
+              className="sidebar-link"
+              style={({ isActive }) =>
+                isActive
+                  ? {
+                      color: "var(--color-accent)",
+                      backgroundColor:
+                        "color-mix(in srgb, var(--color-accent) 12%, transparent)",
+                      borderLeftColor: "var(--color-accent)",
+                    }
+                  : {}
+              }
+            >
+              {routeIcons[route.id]}
               {route.label}
             </NavLink>
           ))}
@@ -206,38 +249,17 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             href="https://github.com/OlufunbiIK/StellarSplit"
             target="_blank"
             rel="noopener noreferrer"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "0.65rem",
-              padding: "0.6rem 0.75rem",
-              borderRadius: "0.5rem",
-              fontSize: "0.9rem",
-              fontWeight: 500,
-              textDecoration: "none",
-              color: "var(--color-text-muted)",
-              borderLeft: "2px solid transparent",
-              transition: "all 0.15s ease",
-              marginTop: "0.5rem",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = "var(--color-text)";
-              e.currentTarget.style.backgroundColor =
-                "color-mix(in srgb, var(--color-accent) 6%, transparent)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = "var(--color-text-muted)";
-              e.currentTarget.style.backgroundColor = "transparent";
-            }}
+            className="sidebar-link"
+            style={{ marginTop: "0.5rem" }}
           >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
             </svg>
             GitHub
           </a>
         </nav>
 
-        {/* ── Language selector — pinned to bottom ── */}
+        {/* ── Language selector ── */}
         <div
           style={{
             padding: "1rem 1.25rem",
