@@ -5,6 +5,8 @@ use soroban_sdk::{contract, contractimpl, Address, Env, String, Vec};
 mod events;
 mod storage;
 mod types;
+mod errors;
+pub use errors::Error;
 
 #[cfg(test)]
 mod test;
@@ -22,18 +24,19 @@ impl ReminderContract {
         env: Env,
         split_id: String,
         participants: Vec<EscrowParticipant>,
-    ) {
+    ) -> Result<(), Error> {
         let escrow = ReminderEscrow {
             split_id: split_id.clone(),
             participants,
         };
         storage::set_escrow(&env, &split_id, &escrow);
+        Ok(())
     }
 
-    pub fn request_reminder(env: Env, split_id: String, participant: Address) {
+    pub fn request_reminder(env: Env, split_id: String, participant: Address) -> Result<(), Error> {
         participant.require_auth();
 
-        let mut escrow = storage::get_escrow(&env, &split_id).expect("Escrow not found");
+        let mut escrow = storage::get_escrow(&env, &split_id).ok_or(Error::EscrowNotFound)?;
 
         let mut found = false;
         let mut updated_participants = Vec::new(&env);
@@ -49,17 +52,18 @@ impl ReminderContract {
         }
 
         if !found {
-            panic!("Participant not found or already paid");
+            return Err(Error::AlreadyPaid);
         }
 
         escrow.participants = updated_participants;
         storage::set_escrow(&env, &split_id, &escrow);
+        Ok(())
     }
 
-    pub fn cancel_reminder(env: Env, split_id: String, participant: Address) {
+    pub fn cancel_reminder(env: Env, split_id: String, participant: Address) -> Result<(), Error> {
         participant.require_auth();
 
-        let mut escrow = storage::get_escrow(&env, &split_id).expect("Escrow not found");
+        let mut escrow = storage::get_escrow(&env, &split_id).ok_or(Error::EscrowNotFound)?;
 
         let mut found = false;
         let mut updated_participants = Vec::new(&env);
@@ -75,23 +79,24 @@ impl ReminderContract {
         }
 
         if !found {
-            panic!("Participant not found");
+            return Err(Error::ParticipantNotFound);
         }
 
         escrow.participants = updated_participants;
         storage::set_escrow(&env, &split_id, &escrow);
+        Ok(())
     }
 
-    pub fn get_reminder_requested(env: Env, split_id: String, participant: Address) -> bool {
-        let escrow = storage::get_escrow(&env, &split_id).expect("Escrow not found");
+    pub fn get_reminder_requested(env: Env, split_id: String, participant: Address) -> Result<bool, Error> {
+        let escrow = storage::get_escrow(&env, &split_id).ok_or(Error::EscrowNotFound)?;
 
         for i in 0..escrow.participants.len() {
             let p = escrow.participants.get(i).unwrap();
             if p.address == participant {
-                return p.reminder_requested;
+                return Ok(p.reminder_requested);
             }
         }
 
-        false
+        Ok(false)
     }
 }
