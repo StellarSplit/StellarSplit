@@ -122,7 +122,12 @@ impl AchievementBadgesContract {
         has_badge(&env, &user, &escrow_id)
     }
 
-    pub fn transfer(_env: Env, _from: Address, _to: Address, _badge_id: u64) -> Result<(), crate::types::BadgeError> {
+    pub fn transfer(
+        _env: Env,
+        _from: Address,
+        _to: Address,
+        _badge_id: u64,
+    ) -> Result<(), crate::types::BadgeError> {
         Err(crate::types::BadgeError::TransferNotAllowed)
     }
 }
