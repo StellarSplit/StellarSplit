@@ -102,13 +102,14 @@ fn test_eligibility_check_requires_no_auth() {
         completion_rate: 100,
     };
 
-    let user2 = Address::generate(&env_no_auth);
+    let user2 = Address::generate(&env);
     // This must NOT panic — no auth required
-    let result = client.check_badge_eligibility_with_evidence(&user2, &evidence);
+    let result = client.check_eligibility_with_evidence(&user2, &evidence);
 
     // The evidence values are taken at face value in the view call
     // (on-chain cross-reference only happens at mint time)
     assert!(result.is_eligible || !result.is_eligible); // just must not panic
+}
 fn test_check_badge_eligibility() {
     let (env, admin, client) = setup_test();
     let user = Address::generate(&env);
@@ -403,3 +404,23 @@ fn test_different_users_can_mint_same_badge() {
 
     assert!(!client.has_badge(&user, &String::from_str(&env, "escrow-unknown")));
 }
+# [ t e s t ]  
+ f n   t e s t _ t r a n s f e r _ a l w a y s _ r e j e c t e d ( )   {  
+         l e t   e n v   =   E n v : : d e f a u l t ( ) ;  
+         l e t   c o n t r a c t _ i d   =   e n v . r e g i s t e r _ c o n t r a c t ( N o n e ,   A c h i e v e m e n t B a d g e s C o n t r a c t ) ;  
+         l e t   c l i e n t   =   A c h i e v e m e n t B a d g e s C o n t r a c t C l i e n t : : n e w ( & e n v ,   & c o n t r a c t _ i d ) ;  
+         l e t   a d m i n   =   A d d r e s s : : g e n e r a t e ( & e n v ) ;  
+         l e t   e s c r o w _ i d   =   e n v . r e g i s t e r _ c o n t r a c t ( N o n e ,   m o c k _ e s c r o w : : M o c k E s c r o w ) ;  
+         c l i e n t . i n i t i a l i z e ( & a d m i n ,   & e s c r o w _ i d ) ;  
+  
+         l e t   f r o m   =   A d d r e s s : : g e n e r a t e ( & e n v ) ;  
+         l e t   t o   =   A d d r e s s : : g e n e r a t e ( & e n v ) ;  
+         l e t   b a d g e _ i d   =   1 u 6 4 ;  
+  
+         l e t   r e s u l t   =   c l i e n t . t r y _ t r a n s f e r ( & f r o m ,   & t o ,   & b a d g e _ i d ) ;  
+         a s s e r t _ e q ! (  
+                 r e s u l t . e r r ( ) . u n w r a p ( ) . u n w r a p ( ) ,  
+                 c r a t e : : t y p e s : : B a d g e E r r o r : : T r a n s f e r N o t A l l o w e d  
+         ) ;  
+ }  
+ 

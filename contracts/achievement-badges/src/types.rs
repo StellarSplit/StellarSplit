@@ -42,4 +42,5 @@ pub enum BadgeError {
     NotEligible = 2,
     InvalidBadgeType = 3,
     Unauthorized = 4,
+    TransferNotAllowed = 10,
 }
