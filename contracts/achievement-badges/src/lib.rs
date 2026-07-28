@@ -121,6 +121,15 @@ impl AchievementBadgesContract {
     pub fn has_badge(env: Env, user: Address, escrow_id: String) -> bool {
         has_badge(&env, &user, &escrow_id)
     }
+
+    pub fn transfer(
+        _env: Env,
+        _from: Address,
+        _to: Address,
+        _badge_id: u64,
+    ) -> Result<(), crate::types::BadgeError> {
+        Err(crate::types::BadgeError::TransferNotAllowed)
+    }
 }
 
 fn get_total_split_amount(env: &Env, escrow_address: &Address, escrow_id: &String) -> i128 {
