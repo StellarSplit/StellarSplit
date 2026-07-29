@@ -31,23 +31,22 @@ fn test_reminder_flow() {
         reminder_requested: false,
     });
 
-    client.create_reminder_escrow(&split_id, &participants);
+    client.create_reminder_escrow(&split_id, &participants).unwrap();
 
     // Initial state check
-    assert!(!client.get_reminder_requested(&split_id, &participant_1));
-    assert!(!client.get_reminder_requested(&split_id, &participant_2));
+    assert!(!client.get_reminder_requested(&split_id, &participant_1).unwrap());
+    assert!(!client.get_reminder_requested(&split_id, &participant_2).unwrap());
 
     // Request reminder for participant_1 (unpaid)
-    client.request_reminder(&split_id, &participant_1);
-    assert!(client.get_reminder_requested(&split_id, &participant_1));
+    client.request_reminder(&split_id, &participant_1).unwrap();
+    assert!(client.get_reminder_requested(&split_id, &participant_1).unwrap());
 
     // Cancel reminder for participant_1
-    client.cancel_reminder(&split_id, &participant_1);
-    assert!(!client.get_reminder_requested(&split_id, &participant_1));
+    client.cancel_reminder(&split_id, &participant_1).unwrap();
+    assert!(!client.get_reminder_requested(&split_id, &participant_1).unwrap());
 }
 
 #[test]
-#[should_panic(expected = "Participant not found or already paid")]
 fn test_request_reminder_already_paid_fails() {
     let env = Env::default();
     env.mock_all_auths();
@@ -67,6 +66,7 @@ fn test_request_reminder_already_paid_fails() {
         reminder_requested: false,
     });
 
-    client.create_reminder_escrow(&split_id, &participants);
-    client.request_reminder(&split_id, &participant);
+    client.create_reminder_escrow(&split_id, &participants).unwrap();
+    let res = client.request_reminder(&split_id, &participant);
+    assert_eq!(res, Err(Error::AlreadyPaid));
 }
