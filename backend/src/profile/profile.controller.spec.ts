@@ -18,6 +18,8 @@ describe('ProfileController', () => {
     displayName: 'Alice',
     email: null,
     avatarUrl: null,
+    avatarThumbUrl: null,
+    bio: null,
     preferredCurrency: 'USD',
     defaultSplitType: DefaultSplitType.EQUAL,
     emailNotifications: true,
@@ -82,10 +84,7 @@ describe('ProfileController', () => {
         displayName: 'Alice Updated',
         preferredCurrency: 'EUR' as const,
       };
-      const req = {
-        user: { walletAddress, id: 'user-id' },
-      };
-      const result = await controller.update(walletAddress, dto, req as any);
+      const result = await controller.update(walletAddress, dto);
       expect(result).toEqual(mockProfile);
       expect(profileService.update).toHaveBeenCalledWith(walletAddress, dto);
     });

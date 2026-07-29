@@ -136,6 +136,45 @@ export class UploadService implements OnModuleInit {
         return { url, key };
     }
 
+    async uploadBuffer(
+        buffer: Buffer,
+        fileName: string,
+        contentType: string,
+    ): Promise<string> {
+        if (!buffer || !Buffer.isBuffer(buffer)) {
+            throw new BadRequestException('Buffer is required for upload');
+        }
+
+        if (!fileName || typeof fileName !== 'string') {
+            throw new BadRequestException('Filename is required and must be a string');
+        }
+
+        if (!contentType || typeof contentType !== 'string') {
+            throw new BadRequestException('Content type is required and must be a string');
+        }
+
+        const sanitizedFileName = this.policyValidator.sanitizeFilename(fileName);
+        const uuid = uuidv4();
+        const key = this.policyValidator.generateObjectKey(sanitizedFileName, uuid);
+
+        const command = new PutObjectCommand({
+            Bucket: this.bucketName,
+            Key: key,
+            Body: buffer,
+            ContentType: contentType,
+            ContentLength: buffer.length,
+            Metadata: {
+                originalFilename: fileName,
+                uploadId: uuid,
+                uploadedAt: new Date().toISOString(),
+            },
+        });
+
+        await this.s3Client.send(command);
+        this.logger.log(`Uploaded buffer to S3 with key: ${key}`);
+        return key;
+    }
+
     async getPresignedDownloadUrl(key: string): Promise<string> {
         if (!key || typeof key !== 'string') {
             throw new BadRequestException('Object key is required and must be a string');

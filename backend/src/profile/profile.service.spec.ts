@@ -18,6 +18,8 @@ describe('ProfileService', () => {
     displayName: 'Alice',
     email: null,
     avatarUrl: null,
+    avatarThumbUrl: null,
+    bio: null,
     preferredCurrency: 'USD',
     defaultSplitType: DefaultSplitType.EQUAL,
     emailNotifications: true,

@@ -5,12 +5,12 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import * as sharp from 'sharp';
+import sharp from 'sharp';
 
 import { UserProfile, DefaultSplitType } from './profile.entity';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { CurrencyService } from '../modules/currency/currency.service';
-import { UploadService } from '../upload/upload.service'; // <-- Adjust path if needed
+import { UploadService } from '../uploads/upload.service';
 
 @Injectable()
 export class ProfileService {
