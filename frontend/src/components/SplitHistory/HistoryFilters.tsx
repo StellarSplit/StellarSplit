@@ -43,10 +43,14 @@ export function HistoryFilters({ value, onChange }: HistoryFiltersProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         {/* Search */}
         <div>
-          <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
+          <label
+            htmlFor="history-search"
+            className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1"
+          >
             {t("history.search")}
           </label>
           <input
+            id="history-search"
             type="text"
             value={value.search}
             onChange={(e) => onChange({ ...value, search: e.target.value })}
@@ -87,10 +91,14 @@ export function HistoryFilters({ value, onChange }: HistoryFiltersProps) {
 
         {/* Role */}
         <div>
-          <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
+          <label
+            htmlFor="history-role"
+            className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1"
+          >
             {t("history.role")}
           </label>
           <select
+            id="history-role"
             className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm"
             value={value.role}
             onChange={(e) => onChange({ ...value, role: e.target.value as FiltersState["role"] })}
@@ -103,10 +111,14 @@ export function HistoryFilters({ value, onChange }: HistoryFiltersProps) {
 
         {/* Sort */}
         <div>
-          <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
+          <label
+            htmlFor="history-sort"
+            className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1"
+          >
             {t("history.sort")}
           </label>
           <select
+            id="history-sort"
             className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm"
             value={value.sort}
             onChange={(e) => onChange({ ...value, sort: e.target.value as SortOption })}

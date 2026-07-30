@@ -1,5 +1,8 @@
 import { useTranslation } from "react-i18next";
-import type { SplitStatus, SplitRole } from "../../pages/SplitHistoryPage";
+import type {
+  SplitRole,
+  SplitStatus,
+} from "../../services/splitHistoryRepository";
 
 interface SplitCardProps {
   title: string;
