@@ -27,6 +27,12 @@ export class UserProfile {
   @Column({ type: 'varchar', length: 2048, nullable: true, name: 'avatar_url' })
   avatarUrl!: string | null;
 
+  @Column({ type: 'varchar', length: 2048, nullable: true, name: 'avatar_thumb_url' })
+  avatarThumbUrl!: string | null;
+
+  @Column({ type: 'text', nullable: true, name: 'bio' })
+  bio!: string | null;
+
   @Column({ type: 'varchar', length: 10, default: 'USD', name: 'preferred_currency' })
   preferredCurrency!: string;
 
