@@ -165,12 +165,23 @@ impl SplitTemplateContract {
     /// Success or error if template not found
     pub fn use_template(env: Env, template_id: String, split_id: u64) -> Result<(), Error> {
         // Load the template; fail if not found
-        let template = storage::get_template(&env, &template_id).ok_or(Error::TemplateNotFound)?;
+        let mut template = storage::get_template(&env, &template_id).ok_or(Error::TemplateNotFound)?;
 
         // Check version compatibility
         if !Self::is_compatible(env.clone(), template.version) {
             return Err(Error::IncompatibleVersion);
         }
+
+        // Enforce max_uses cap if one is configured
+        if let Some(max) = template.max_uses {
+            if template.use_count >= max {
+                return Err(Error::TemplateLimitReached);
+            }
+        }
+
+        // Increment use counter and persist the updated template
+        template.use_count += 1;
+        storage::store_template(&env, &template);
 
         // Emit event linking template to split
         events::emit_template_used(&env, template_id, split_id);

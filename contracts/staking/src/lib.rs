@@ -85,7 +85,12 @@ impl StakingContract {
         staker.require_auth();
 
         let mut info = storage::get_staker_info(&env, &staker).ok_or(Error::InsufficientStake)?;
-        if info.amount < amount {
+        
+        // FIX: Check against available balance (staked - pending_withdrawal)
+        let available = info.amount.checked_sub(info.pending_withdrawal)
+            .ok_or(Error::InsufficientStake)?;
+        
+        if amount > available {
             return Err(Error::InsufficientStake);
         }
 

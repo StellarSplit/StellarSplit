@@ -215,6 +215,76 @@ fn test_fee_only_repayment_rejected() {
     assert!(result.is_err());
 }
 
+#[test]
+fn test_full_repayment_succeeds() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let admin = Address::generate(&env);
+
+    let token_admin = Address::generate(&env);
+    let token_id = env.register_stellar_asset_contract_v2(token_admin.clone());
+    let token_address = token_id.address();
+    let token_client = TokenClient::new(&env, &token_address);
+    let token_admin_client = TokenAdminClient::new(&env, &token_address);
+
+    let flash_loan_id = env.register_contract(None, FlashLoanContract);
+    let flash_loan_client = FlashLoanContractClient::new(&env, &flash_loan_id);
+    flash_loan_client.initialize(&admin, &token_address, &50u32); // 0.5% fee, so borrowing 1000 => fee 5
+
+    let receiver_id = env.register_contract(None, ReceiverContract);
+    let receiver_client = ReceiverContractClient::new(&env, &receiver_id);
+    receiver_client.set_flash_loan(&flash_loan_id, &token_address);
+
+    token_admin_client.mint(&flash_loan_id, &1000000);
+    token_admin_client.mint(&receiver_id, &5);
+
+    let result = flash_loan_client.try_flash_loan(&receiver_id, &1000, &Bytes::new(&env));
+
+    assert!(result.is_ok());
+    assert_eq!(token_client.balance(&flash_loan_id), 1000005);
+}
+
+#[test]
+fn test_failed_loan_clears_reentrancy_guard() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let admin = Address::generate(&env);
+
+    let token_admin = Address::generate(&env);
+    let token_id = env.register_stellar_asset_contract_v2(token_admin.clone());
+    let token_address = token_id.address();
+    let token_admin_client = TokenAdminClient::new(&env, &token_address);
+
+    let flash_loan_id = env.register_contract(None, FlashLoanContract);
+    let flash_loan_client = FlashLoanContractClient::new(&env, &flash_loan_id);
+    flash_loan_client.initialize(&admin, &token_address, &50u32);
+
+    // First: a receiver that only repays principal, no fee, causing InsufficientRepayment.
+    let failing_receiver_id = env.register_contract(None, FailingReceiverContract);
+    let failing_receiver_client = FailingReceiverContractClient::new(&env, &failing_receiver_id);
+    failing_receiver_client.set_flash_loan(&flash_loan_id, &token_address);
+
+    token_admin_client.mint(&flash_loan_id, &1000000);
+    token_admin_client.mint(&failing_receiver_id, &100000);
+
+    let failed_result =
+        flash_loan_client.try_flash_loan(&failing_receiver_id, &100000, &Bytes::new(&env));
+    assert!(failed_result.is_err());
+
+    // Second: a normal successful loan afterward must still work — proving the
+    // reentrancy guard was cleared after the failed attempt, not left stuck.
+    let receiver_id = env.register_contract(None, ReceiverContract);
+    let receiver_client = ReceiverContractClient::new(&env, &receiver_id);
+    receiver_client.set_flash_loan(&flash_loan_id, &token_address);
+    token_admin_client.mint(&receiver_id, &10000);
+
+    let success_result =
+        flash_loan_client.try_flash_loan(&receiver_id, &100000, &Bytes::new(&env));
+    assert!(success_result.is_ok());
+}
+
 // ============================================================
 // Property / invariant tests (proptest-style)
 // ============================================================

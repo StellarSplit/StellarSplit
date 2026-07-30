@@ -190,11 +190,7 @@ fn test_delegation() {
     staking_client.delegate_voting_power(&staker1, &Some(staker2.clone()));
     assert_delegation_event(&env, &staker1, &Some(staker2.clone()));
 
-    assert_eq!(staking_client.get_voting_power(&staker1), 600); // Still has own voting power?
-                                                                // Wait, usually delegation means giving power to someone else.
-                                                                // The requirement says "Delegate voting power".
-                                                                // My implementation: get_voting_power = staked + delegated_to_me.
-                                                                // So staker2 should have 400 + 600 = 1000.
+    assert_eq!(staking_client.get_voting_power(&staker1), 600);
     assert_eq!(staking_client.get_voting_power(&staker2), 1000);
 
     // Unstake staker1 partial
@@ -206,6 +202,93 @@ fn test_delegation() {
     staking_client.delegate_voting_power(&staker1, &None);
     assert_delegation_event(&env, &staker1, &None);
     assert_eq!(staking_client.get_voting_power(&staker2), 400);
+}
+
+// ============================================================
+// CON-002: Double-Unstake Overdraft Tests
+// ============================================================
+
+#[test]
+fn test_cannot_double_unstake_beyond_stake() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let admin = Address::generate(&env);
+    let staker = Address::generate(&env);
+
+    // Deploy token
+    let token_admin = Address::generate(&env);
+    let token_id = env.register_stellar_asset_contract_v2(token_admin.clone());
+    let token_address = token_id.address();
+    let token_admin_client = TokenAdminClient::new(&env, &token_address);
+
+    // Deploy Staking Contract
+    let staking_id = env.register_contract(None, StakingContract);
+    let staking_client = StakingContractClient::new(&env, &staking_id);
+    staking_client.initialize(&admin, &token_address);
+
+    // Mint tokens and stake 1000
+    token_admin_client.mint(&staker, &1000);
+    staking_client.stake(&staker, &1000);
+    assert_eq!(staking_client.get_voting_power(&staker), 1000);
+
+    // Unstake 700 (leaves 300 available, 700 pending)
+    staking_client.unstake(&staker, &700);
+    let unlock_time = env.ledger().timestamp() + 604800;
+    assert_unstake_event(&env, &staker, 700, unlock_time);
+    assert_eq!(staking_client.get_voting_power(&staker), 300);
+
+    // Try to unstake 400 (should fail - only 300 available)
+    let result = staking_client.try_unstake(&staker, &400);
+    assert!(result.is_err());
+    assert_eq!(result.err().unwrap(), Ok(Error::InsufficientStake));
+
+    // Verify state unchanged
+    let info = staking_client.get_staker_info(&staker);
+    assert_eq!(info.amount, 300);
+    assert_eq!(info.pending_withdrawal, 700);
+}
+
+#[test]
+fn test_single_unstake_within_available_succeeds() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let admin = Address::generate(&env);
+    let staker = Address::generate(&env);
+
+    // Deploy token
+    let token_admin = Address::generate(&env);
+    let token_id = env.register_stellar_asset_contract_v2(token_admin.clone());
+    let token_address = token_id.address();
+    let token_admin_client = TokenAdminClient::new(&env, &token_address);
+
+    // Deploy Staking Contract
+    let staking_id = env.register_contract(None, StakingContract);
+    let staking_client = StakingContractClient::new(&env, &staking_id);
+    staking_client.initialize(&admin, &token_address);
+
+    // Mint tokens and stake 1000
+    token_admin_client.mint(&staker, &1000);
+    staking_client.stake(&staker, &1000);
+    assert_eq!(staking_client.get_voting_power(&staker), 1000);
+
+    // Unstake 700 (leaves 300 available, 700 pending)
+    staking_client.unstake(&staker, &700);
+    let unlock_time = env.ledger().timestamp() + 604800;
+    assert_unstake_event(&env, &staker, 700, unlock_time);
+    assert_eq!(staking_client.get_voting_power(&staker), 300);
+
+    // Unstake 300 (remaining available - should succeed)
+    staking_client.unstake(&staker, &300);
+    let unlock_time2 = env.ledger().timestamp() + 604800;
+    assert_unstake_event(&env, &staker, 300, unlock_time2);
+    assert_eq!(staking_client.get_voting_power(&staker), 0);
+
+    // Verify pending_withdrawal is now 1000
+    let info = staking_client.get_staker_info(&staker);
+    assert_eq!(info.amount, 0);
+    assert_eq!(info.pending_withdrawal, 1000);
 }
 
 // ============================================================
@@ -286,14 +369,12 @@ mod proptests {
             delegated_amounts.push(0i128);
             delegated_amounts.push(0i128);
             let mut reward_index: i128 = 0;
-            let mut reward_pool: i128 = 0; // tokens in staking contract beyond principal
+            let mut reward_pool: i128 = 0;
 
-            // Use seeds to get deterministic amounts per case.
             let mut stake_amount = amount_seed as i128;
             let mut deposit_amount = deposit_seed as i128;
 
             for (step_no, op) in steps.into_iter().enumerate() {
-                // Capture balances for invariants.
                 let before_contract_balance = token_client.balance(&staking_id);
                 let before_total_tokens = {
                     let mut t = token_client.balance(&admin);
@@ -303,12 +384,10 @@ mod proptests {
                     t + token_client.balance(&staking_id)
                 };
 
-                // Deterministic pseudo-random indexing from step_no.
                 let idx = (step_no + stake_idx) % 3;
                 let delegatee_idx = (step_no + stake_idx + 1) % 3;
 
                 match op {
-                    // 0 => stake
                     0 => {
                         let amount = ((stake_amount + step_no as i128) % 500i128) + 1i128;
                         let staker = stakers[idx].clone();
@@ -316,18 +395,15 @@ mod proptests {
                         if res.is_ok() {
                             update_staker_rewards(&mut model, idx, reward_index);
                             model[idx].staked += amount;
-                            // If delegated, add to delegatee's voting power backing.
                             if let Some(d) = model[idx].delegated_to {
                                 delegated_amounts[d] += amount;
                             }
                         }
                     }
-                    // 1 => deposit rewards
                     1 => {
                         let amount = ((deposit_amount + step_no as i128 * 7) % 500i128) + 1i128;
                         let res = staking_client.try_deposit_rewards(&admin, &amount);
                         if res.is_ok() {
-                            // deposit_rewards only works if total_staked > 0 (contract validates)
                             let total_staked: i128 = model.iter().map(|m| m.staked).sum();
                             if total_staked > 0 {
                                 reward_pool += amount;
@@ -335,9 +411,7 @@ mod proptests {
                             }
                         }
                     }
-                    // 2 => delegate / clear delegation
                     2 => {
-                        // Alternate between Some(delegatee) and None.
                         let delegator = stakers[idx].clone();
                         let delegatee_addr = stakers[delegatee_idx].clone();
                         let delegate_opt = if step_no % 2 == 0 {
@@ -362,7 +436,6 @@ mod proptests {
                             }
                         }
                     }
-                    // 3 => claim rewards
                     _ => {
                         let staker = stakers[idx].clone();
                         let res = staking_client.try_claim_staking_rewards(&staker);
@@ -375,7 +448,6 @@ mod proptests {
                     }
                 }
 
-                // Token conservation must always hold.
                 let after_total_tokens = {
                     let mut t = token_client.balance(&admin);
                     for s in &stakers {
@@ -385,24 +457,20 @@ mod proptests {
                 };
                 prop_assert_eq!(after_total_tokens, before_total_tokens);
 
-                // Contract balance must equal principal + unclaimed reward pool.
                 let model_total_staked: i128 = model.iter().map(|m| m.staked).sum();
                 prop_assert_eq!(
                     token_client.balance(&staking_id),
                     model_total_staked + reward_pool
                 );
 
-                // Voting power matches staked + delegated backing.
                 for i in 0..3 {
                     let expected = voting_power(&model, &delegated_amounts, i);
                     let actual = staking_client.get_voting_power(&stakers[i]);
                     prop_assert_eq!(actual, expected);
                 }
 
-                // Ensure we didn't underflow the reward pool.
                 prop_assert!(reward_pool >= 0);
 
-                // Keep seeds bounded.
                 stake_amount = (stake_amount + step_no as i128) % 1000i128;
                 deposit_amount = (deposit_amount + step_no as i128 * 3) % 1000i128;
                 let _ = before_contract_balance;

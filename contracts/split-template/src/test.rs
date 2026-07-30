@@ -476,14 +476,58 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
-    fn test_use_template_not_found() {
+    fn test_use_template_increments_use_count() {
+        let (env, creator, client) = setup();
+
+        let name = SorobanString::from_str(&env, "Usable Template Count");
+        let participants = create_equal_split_participants(&env, 2);
+
+        let template_id =
+            client.create_template(&creator, &name, &SplitType::Equal, &participants, &None);
+
+        let before = client.get_template(&template_id);
+        assert_eq!(before.use_count, 0);
+
+        let split_id = 1000u64;
+        let _ = client.use_template(&template_id, &split_id);
+
+        let after = client.get_template(&template_id);
+        assert_eq!(after.use_count, 1);
+    }
+
+    #[test]
+    fn test_use_template_respects_max_uses() {
+        let (env, creator, client) = setup();
+
+        let name = SorobanString::from_str(&env, "Limited Use Template");
+        let participants = create_equal_split_participants(&env, 2);
+
+        let template_id = client.create_template(
+            &creator,
+            &name,
+            &SplitType::Equal,
+            &participants,
+            &Some(1u32),
+        );
+
+        let split_id = 1000u64;
+        let _ = client.use_template(&template_id, &split_id);
+
+        let result = client.try_use_template(&template_id, &1001u64);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), Ok(crate::Error::TemplateLimitReached));
+    }
+
+    #[test]
+    fn test_use_template_not_found_returns_error() {
         let (env, _creator, client) = setup();
 
         let fake_template_id = SorobanString::from_str(&env, "NONEXISTENT_TEMPLATE");
         let split_id = 1000u64;
 
-        let _ = client.use_template(&fake_template_id, &split_id);
+        let result = client.try_use_template(&fake_template_id, &split_id);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), Ok(crate::Error::TemplateNotFound));
     }
 
     #[test]
@@ -503,6 +547,17 @@ mod tests {
 
         // In practice, you'd verify the event was emitted
         // This is a smoke test that the function completes
+    }
+
+    #[test]
+    fn test_get_template_missing_returns_error() {
+        let (env, _creator, client) = setup();
+
+        let fake_template_id = SorobanString::from_str(&env, "DOES_NOT_EXIST");
+
+        let result = client.try_get_template(&fake_template_id);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), Ok(crate::Error::TemplateNotFound));
     }
 
     // ============================================

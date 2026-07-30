@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "build": "npm --prefix backend run build && npm --prefix frontend run build"
+  },
   "dependencies": {
     "@nestjs/bull": "^11.0.4",
     "@nestjs/schedule": "^6.1.1",

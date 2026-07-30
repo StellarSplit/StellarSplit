@@ -9,7 +9,12 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "outDir": "./dist"
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "useDefineForClassFields": false,
+    "ignoreDeprecations": "5.0",
+    "baseUrl": "./src",
+    "paths": { "@/*": ["./*"] }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

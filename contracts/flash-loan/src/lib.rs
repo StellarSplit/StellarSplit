@@ -91,12 +91,19 @@ impl FlashLoanContract {
         // Check balance after
         let balance_after = token_client.balance(&contract_address);
 
+        // Repayment invariant: the caller must return the full principal plus fee,
+        // not just the fee. net_received is measured relative to the post-disbursement
+        // balance (balance_before - amount), so requiring net_received >= amount + fee
+        // is equivalent to requiring balance_after >= balance_before + fee.
+        // See issue #660 for the original report on why this must stay explicit.
         if balance_after < balance_before {
+            storage::set_reentrancy_guard(&env, false);
             return Err(Error::InsufficientRepayment);
         }
 
         let net_received = balance_after - (balance_before - amount);
         if net_received < amount + fee {
+            storage::set_reentrancy_guard(&env, false);
             return Err(Error::InsufficientRepayment);
         }
 

@@ -41,14 +41,27 @@ pub fn emit_pair_registered(env: &Env, from: &Address, to: &Address) {
         .publish((symbol_short!("pair_reg"),), (from.clone(), to.clone()));
 }
 
-pub fn emit_swap_failed(env: &Env, from: &Address, to: &Address, amount_in: i128, reason: &str) {
+/// Emits when a swap fails during path payment execution.
+///
+/// Topic: swap_err
+/// Data: (from_address, to_address, amount, reason)
+pub fn emit_swap_failed(env: &Env, from: &Address, to: &Address, amount: i128, reason: &str) {
     env.events().publish(
         (symbol_short!("swap_err"),),
         (
             from.clone(),
             to.clone(),
-            amount_in,
+            amount,
             String::from_str(env, reason),
         ),
     );
+}
+
+/// Emits when no payment path can be found.
+///
+/// Topic: no_path
+/// Data: (from_address, to_address)
+pub fn emit_path_not_found(env: &Env, from: &Address, to: &Address) {
+    env.events()
+        .publish((symbol_short!("no_path"),), (from.clone(), to.clone()));
 }
