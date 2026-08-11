@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Save, ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react';
+import { Save, ArrowLeft, ArrowRight, CheckCircle, X } from 'lucide-react';
 import { StepIndicator } from './StepIndicator';
 import { BasicInfoStep } from './steps/BasicInfoStep';
 import { SplitMethodStep } from './steps/SplitMethodStep';
@@ -36,6 +36,7 @@ const loadDraft = (): WizardState => {
 export const SplitCreationWizard = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const announceRef = useRef<HTMLDivElement>(null);
     const { activeUserId } = useWallet();
 
@@ -44,6 +45,9 @@ export const SplitCreationWizard = () => {
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [draftSaved, setDraftSaved] = useState(false);
+    const [resumeBanner, setResumeBanner] = useState(
+        searchParams.get('resume') === 'true' && draftRegistry.load('wizard') !== null,
+    );
 
     const isItemized = wizardState.splitMethod === 'itemized';
 
@@ -295,6 +299,23 @@ export const SplitCreationWizard = () => {
                 aria-atomic="true"
                 className="sr-only"
             />
+
+            {/* Resume banner */}
+            {resumeBanner && (
+                <div className="max-w-lg mx-auto px-4 pt-4">
+                    <div className="flex items-center justify-between gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                        <span>Resuming your saved draft</span>
+                        <button
+                            type="button"
+                            onClick={() => setResumeBanner(false)}
+                            className="p-1 rounded-full hover:bg-blue-100 dark:hover:bg-blue-800/50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            aria-label="Dismiss resume banner"
+                        >
+                            <X size={14} />
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Header */}
             <div className="sticky top-0 z-20 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 shadow-sm">
