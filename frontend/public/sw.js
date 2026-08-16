@@ -27,7 +27,7 @@ registerRoute(
     request.destination === 'script' ||
     request.destination === 'style' ||
     request.destination === 'image' ||
-    /\.(js|css|png)$/.test(url.pathname),
+    /\.(js|css|png|jpe?g|webp|svg|gif)$/.test(url.pathname),
   new CacheFirst({
     cacheName: STATIC_CACHE,
     plugins: [
