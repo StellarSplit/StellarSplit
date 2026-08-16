@@ -12,7 +12,12 @@
         "total": "Total",
         "date": "Data",
         "status": "Status",
-        "close": "Fechar"
+        "close": "Fechar",
+        "receiptItems": "Itens do recibo",
+        "subtotal": "Subtotal antes de impostos e gorjeta",
+        "securedBy": "Protegido pela rede Stellar",
+        "share": "Compartilhar",
+        "copy": "Copiar"
     },
     "split": {
         "title": "Título da Divisão",
@@ -138,6 +143,97 @@
             "createGroup": "Criar grupo",
             "settleUp": "Acertar contas",
             "viewReports": "Ver relatórios"
+        }
+    },
+    "wizard": {
+        "pageTitle": "Nova Divisão",
+        "saveDraft": "Salvar rascunho",
+        "draftSaved": "Salvo!",
+        "back": "Voltar",
+        "next": "Próximo",
+        "createSplit": "Criar Divisão",
+        "creating": "Criando…",
+        "steps": {
+            "basicInfo": "Informações básicas",
+            "splitMethod": "Método",
+            "participants": "Participantes",
+            "items": "Itens",
+            "taxTip": "Impostos e gorjeta",
+            "review": "Revisar"
+        },
+        "basicInfo": {
+            "title": "Informações básicas",
+            "subtitle": "Dê um nome à sua divisão e defina o valor total.",
+            "splitTitle": "Título da divisão",
+            "splitTitlePlaceholder": "ex. Jantar no Nobu",
+            "currency": "Moeda",
+            "totalAmount": "Valor total"
+        },
+        "splitMethod": {
+            "title": "Método de divisão",
+            "subtitle": "Escolha como dividir o total.",
+            "equal": "Dividir igualmente",
+            "equalDesc": "Cada pessoa paga o mesmo valor.",
+            "itemized": "Por item",
+            "itemizedDesc": "Atribua itens específicos a cada pessoa.",
+            "percentage": "Por porcentagem",
+            "percentageDesc": "Defina uma porcentagem personalizada por pessoa.",
+            "custom": "Valores personalizados",
+            "customDesc": "Insira valores exatos para cada pessoa."
+        },
+        "participants": {
+            "title": "Adicionar participantes",
+            "subtitle": "Adicione todos que compartilham esta despesa.",
+            "name": "Nome",
+            "namePlaceholder": "ex. Maria",
+            "walletAddress": "Endereço da Stellar Wallet",
+            "walletPlaceholder": "G…",
+            "email": "E-mail",
+            "emailPlaceholder": "maria@example.com",
+            "percentage": "Porcentagem (%)",
+            "customAmount": "Valor personalizado",
+            "addParticipant": "Adicionar participante",
+            "participantN": "Participante {{n}}",
+            "remove": "Remover participante",
+            "totalPct": "Porcentagem total",
+            "mustEqual100": "deve somar 100%",
+            "totalCustom": "Total atribuído"
+        },
+        "items": {
+            "title": "Adicionar itens",
+            "subtitle": "Liste os itens do recibo e atribua-os.",
+            "itemNamePlaceholder": "ex. Bife Wagyu",
+            "addItem": "Adicionar item",
+            "removeItem": "Remover item",
+            "assignTo": "Atribuir a:"
+        },
+        "taxTip": {
+            "title": "Impostos e gorjeta",
+            "subtitle": "Opcionalmente adicione impostos e gorjeta ao total.",
+            "taxLabel": "Impostos",
+            "tipLabel": "Gorjeta",
+            "noTip": "Sem gorjeta",
+            "subtotal": "Subtotal",
+            "grandTotal": "Total geral"
+        },
+        "review": {
+            "title": "Revisar Divisão",
+            "subtitle": "Verifique os detalhes antes de criar sua divisão.",
+            "basicInfo": "Informações básicas",
+            "noParticipants": "Nenhum participante adicionado ainda.",
+            "readyToSubmit": "Tudo parece certo — pronto para criar!"
+        },
+        "validation": {
+            "titleRequired": "Por favor, insira um título para esta divisão.",
+            "currencyRequired": "Por favor, selecione uma moeda.",
+            "totalAmountRequired": "Por favor, insira um valor total maior que zero.",
+            "minParticipants": "Adicione pelo menos 2 participantes.",
+            "participantNameRequired": "Todos os participantes devem ter um nome.",
+            "percentageMustEqual100": "As porcentagens devem somar 100%.",
+            "customMustEqualTotal": "Os valores personalizados devem somar o total.",
+            "minOneItem": "Adicione pelo menos um item.",
+            "itemNameRequired": "Todos os itens devem ter um nome.",
+            "itemPriceRequired": "Todos os itens devem ter um preço maior que zero."
         }
     },
     "activityFeed": {

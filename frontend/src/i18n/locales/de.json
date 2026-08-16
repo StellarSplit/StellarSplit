@@ -12,7 +12,12 @@
         "total": "Gesamt",
         "date": "Datum",
         "status": "Status",
-        "close": "Schließen"
+        "close": "Schließen",
+        "receiptItems": "Quittungsposten",
+        "subtotal": "Zwischensumme vor Steuern & Trinkgeld",
+        "securedBy": "Geschützt durch das Stellar-Netzwerk",
+        "share": "Teilen",
+        "copy": "Kopieren"
     },
     "split": {
         "title": "Split-Titel",
@@ -138,6 +143,97 @@
             "createGroup": "Gruppe erstellen",
             "settleUp": "Ausgleichen",
             "viewReports": "Berichte anzeigen"
+        }
+    },
+    "wizard": {
+        "pageTitle": "Neue Aufteilung",
+        "saveDraft": "Entwurf speichern",
+        "draftSaved": "Gespeichert!",
+        "back": "Zurück",
+        "next": "Weiter",
+        "createSplit": "Aufteilung erstellen",
+        "creating": "Erstelle…",
+        "steps": {
+            "basicInfo": "Basisdaten",
+            "splitMethod": "Methode",
+            "participants": "Teilnehmer",
+            "items": "Posten",
+            "taxTip": "Steuern & Trinkgeld",
+            "review": "Prüfen"
+        },
+        "basicInfo": {
+            "title": "Basisdaten",
+            "subtitle": "Gib deiner Aufteilung einen Namen und lege den Gesamtbetrag fest.",
+            "splitTitle": "Titel der Aufteilung",
+            "splitTitlePlaceholder": "z.B. Abendessen bei Nobu",
+            "currency": "Währung",
+            "totalAmount": "Gesamtbetrag"
+        },
+        "splitMethod": {
+            "title": "Aufteilungsart",
+            "subtitle": "Wähle, wie der Betrag aufgeteilt werden soll.",
+            "equal": "Gleich aufteilen",
+            "equalDesc": "Jede Person zahlt denselben Betrag.",
+            "itemized": "Nach Posten",
+            "itemizedDesc": "Bestimmte Posten jeder Person zuweisen.",
+            "percentage": "Nach Prozent",
+            "percentageDesc": "Prozentsatz pro Person festlegen.",
+            "custom": "Eigene Beträge",
+            "customDesc": "Exakte Beträge pro Person eingeben."
+        },
+        "participants": {
+            "title": "Teilnehmer hinzufügen",
+            "subtitle": "Füge alle hinzu, die diese Ausgabe teilen.",
+            "name": "Name",
+            "namePlaceholder": "z.B. Max",
+            "walletAddress": "Stellar-Wallet-Adresse",
+            "walletPlaceholder": "G…",
+            "email": "E-Mail",
+            "emailPlaceholder": "max@example.com",
+            "percentage": "Prozent (%)",
+            "customAmount": "Eigener Betrag",
+            "addParticipant": "Teilnehmer hinzufügen",
+            "participantN": "Teilnehmer {{n}}",
+            "remove": "Teilnehmer entfernen",
+            "totalPct": "Gesamtprozentsatz",
+            "mustEqual100": "muss 100 % ergeben",
+            "totalCustom": "Gesamt zugewiesen"
+        },
+        "items": {
+            "title": "Posten hinzufügen",
+            "subtitle": "Liste die Posten der Quittung auf und weise sie zu.",
+            "itemNamePlaceholder": "z.B. Wagyu-Steak",
+            "addItem": "Posten hinzufügen",
+            "removeItem": "Posten entfernen",
+            "assignTo": "Zuweisen an:"
+        },
+        "taxTip": {
+            "title": "Steuern & Trinkgeld",
+            "subtitle": "Optional Steuern und Trinkgeld zum Gesamtbetrag hinzufügen.",
+            "taxLabel": "Steuern",
+            "tipLabel": "Trinkgeld",
+            "noTip": "Kein Trinkgeld",
+            "subtotal": "Zwischensumme",
+            "grandTotal": "Gesamtsumme"
+        },
+        "review": {
+            "title": "Aufteilung prüfen",
+            "subtitle": "Überprüfe die Details vor dem Erstellen.",
+            "basicInfo": "Basisdaten",
+            "noParticipants": "Noch keine Teilnehmer hinzugefügt.",
+            "readyToSubmit": "Alles sieht gut aus — bereit zum Erstellen!"
+        },
+        "validation": {
+            "titleRequired": "Bitte gib einen Titel für diese Aufteilung ein.",
+            "currencyRequired": "Bitte wähle eine Währung.",
+            "totalAmountRequired": "Bitte gib einen Gesamtbetrag größer als Null ein.",
+            "minParticipants": "Füge mindestens 2 Teilnehmer hinzu.",
+            "participantNameRequired": "Alle Teilnehmer müssen einen Namen haben.",
+            "percentageMustEqual100": "Die Prozentsätze müssen 100 % ergeben.",
+            "customMustEqualTotal": "Die eigenen Beträge müssen dem Gesamtbetrag entsprechen.",
+            "minOneItem": "Füge mindestens einen Posten hinzu.",
+            "itemNameRequired": "Alle Posten müssen einen Namen haben.",
+            "itemPriceRequired": "Alle Posten müssen einen Preis größer als Null haben."
         }
     },
     "activityFeed": {

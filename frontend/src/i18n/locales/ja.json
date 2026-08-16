@@ -12,7 +12,12 @@
         "total": "合計",
         "date": "日付",
         "status": "ステータス",
-        "close": "閉じる"
+        "close": "閉じる",
+        "receiptItems": "レシート項目",
+        "subtotal": "税・チップ前の小計",
+        "securedBy": "Stellarネットワークにより保護",
+        "share": "共有",
+        "copy": "コピー"
     },
     "split": {
         "title": "スプリット名",
@@ -138,6 +143,97 @@
             "createGroup": "グループを作成",
             "settleUp": "精算",
             "viewReports": "レポートを見る"
+        }
+    },
+    "wizard": {
+        "pageTitle": "新規分割",
+        "saveDraft": "下書きを保存",
+        "draftSaved": "保存しました！",
+        "back": "戻る",
+        "next": "次へ",
+        "createSplit": "分割を作成",
+        "creating": "作成中…",
+        "steps": {
+            "basicInfo": "基本情報",
+            "splitMethod": "方法",
+            "participants": "参加者",
+            "items": "項目",
+            "taxTip": "税金・チップ",
+            "review": "確認"
+        },
+        "basicInfo": {
+            "title": "基本情報",
+            "subtitle": "分割に名前を付け、合計金額を設定します。",
+            "splitTitle": "分割タイトル",
+            "splitTitlePlaceholder": "例：Nobuでの夕食",
+            "currency": "通貨",
+            "totalAmount": "合計金額"
+        },
+        "splitMethod": {
+            "title": "分割方法",
+            "subtitle": "合計の分割方法を選択します。",
+            "equal": "均等分割",
+            "equalDesc": "各人が同じ金額を支払います。",
+            "itemized": "項目ごと",
+            "itemizedDesc": "各人に特定の項目を割り当てます。",
+            "percentage": "パーセンテージ",
+            "percentageDesc": "人ごとにカスタムパーセンテージを設定します。",
+            "custom": "カスタム金額",
+            "customDesc": "人ごとに正確な金額を入力します。"
+        },
+        "participants": {
+            "title": "参加者を追加",
+            "subtitle": "この費用を共有する全員を追加します。",
+            "name": "名前",
+            "namePlaceholder": "例：太郎",
+            "walletAddress": "Stellarウォレットアドレス",
+            "walletPlaceholder": "G…",
+            "email": "メール",
+            "emailPlaceholder": "taro@example.com",
+            "percentage": "パーセンテージ（%）",
+            "customAmount": "カスタム金額",
+            "addParticipant": "参加者を追加",
+            "participantN": "参加者 {{n}}",
+            "remove": "参加者を削除",
+            "totalPct": "合計パーセンテージ",
+            "mustEqual100": "100%になる必要があります",
+            "totalCustom": "割り当て合計"
+        },
+        "items": {
+            "title": "項目を追加",
+            "subtitle": "レシートの項目を一覧表示し、割り当てます。",
+            "itemNamePlaceholder": "例：和牛ステーキ",
+            "addItem": "項目を追加",
+            "removeItem": "項目を削除",
+            "assignTo": "割り当て先："
+        },
+        "taxTip": {
+            "title": "税金・チップ",
+            "subtitle": "税金とチップを合計に追加できます（任意）。",
+            "taxLabel": "税金",
+            "tipLabel": "チップ",
+            "noTip": "チップなし",
+            "subtotal": "小計",
+            "grandTotal": "総合計"
+        },
+        "review": {
+            "title": "分割を確認",
+            "subtitle": "作成する前に詳細を確認してください。",
+            "basicInfo": "基本情報",
+            "noParticipants": "まだ参加者が追加されていません。",
+            "readyToSubmit": "すべて問題ありません — 作成できます！"
+        },
+        "validation": {
+            "titleRequired": "この分割のタイトルを入力してください。",
+            "currencyRequired": "通貨を選択してください。",
+            "totalAmountRequired": "0より大きい合計金額を入力してください。",
+            "minParticipants": "少なくとも2人の参加者を追加してください。",
+            "participantNameRequired": "すべての参加者に名前が必要です。",
+            "percentageMustEqual100": "パーセンテージの合計は100%になる必要があります。",
+            "customMustEqualTotal": "カスタム金額の合計は総額と一致する必要があります。",
+            "minOneItem": "少なくとも1つの項目を追加してください。",
+            "itemNameRequired": "すべての項目に名前が必要です。",
+            "itemPriceRequired": "すべての項目に0より大きい価格が必要です。"
         }
     },
     "activityFeed": {

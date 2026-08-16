@@ -12,7 +12,12 @@
         "total": "Total",
         "date": "Fecha",
         "status": "Estado",
-        "close": "Cerrar"
+        "close": "Cerrar",
+        "receiptItems": "Artículos del recibo",
+        "subtotal": "Subtotal antes de impuestos y propina",
+        "securedBy": "Protegido por la red Stellar",
+        "share": "Compartir",
+        "copy": "Copiar"
     },
     "split": {
         "title": "Título de la Cuenta",
@@ -138,6 +143,97 @@
             "createGroup": "Crear grupo",
             "settleUp": "Liquidar",
             "viewReports": "Ver informes"
+        }
+    },
+    "wizard": {
+        "pageTitle": "Nuevo Split",
+        "saveDraft": "Guardar borrador",
+        "draftSaved": "¡Guardado!",
+        "back": "Atrás",
+        "next": "Siguiente",
+        "createSplit": "Crear Split",
+        "creating": "Creando…",
+        "steps": {
+            "basicInfo": "Información básica",
+            "splitMethod": "Método",
+            "participants": "Participantes",
+            "items": "Artículos",
+            "taxTip": "Impuestos y propina",
+            "review": "Revisar"
+        },
+        "basicInfo": {
+            "title": "Información básica",
+            "subtitle": "Dale un nombre a tu split y establece el monto total.",
+            "splitTitle": "Título del split",
+            "splitTitlePlaceholder": "p.ej. Cena en Nobu",
+            "currency": "Moneda",
+            "totalAmount": "Monto total"
+        },
+        "splitMethod": {
+            "title": "Método de división",
+            "subtitle": "Elige cómo dividir el total.",
+            "equal": "Dividir equitativamente",
+            "equalDesc": "Cada persona paga la misma cantidad.",
+            "itemized": "Por artículo",
+            "itemizedDesc": "Asigna artículos específicos a cada persona.",
+            "percentage": "Por porcentaje",
+            "percentageDesc": "Establece un porcentaje personalizado por persona.",
+            "custom": "Montos personalizados",
+            "customDesc": "Ingresa montos exactos para cada persona."
+        },
+        "participants": {
+            "title": "Agregar participantes",
+            "subtitle": "Agrega a todos los que comparten este gasto.",
+            "name": "Nombre",
+            "namePlaceholder": "p.ej. Ana",
+            "walletAddress": "Dirección de Stellar Wallet",
+            "walletPlaceholder": "G…",
+            "email": "Correo electrónico",
+            "emailPlaceholder": "ana@example.com",
+            "percentage": "Porcentaje (%)",
+            "customAmount": "Monto personalizado",
+            "addParticipant": "Agregar participante",
+            "participantN": "Participante {{n}}",
+            "remove": "Eliminar participante",
+            "totalPct": "Porcentaje total",
+            "mustEqual100": "debe sumar 100%",
+            "totalCustom": "Total asignado"
+        },
+        "items": {
+            "title": "Agregar artículos",
+            "subtitle": "Enumera los artículos del recibo y asígnalos.",
+            "itemNamePlaceholder": "p.ej. Bistec Wagyu",
+            "addItem": "Agregar artículo",
+            "removeItem": "Eliminar artículo",
+            "assignTo": "Asignar a:"
+        },
+        "taxTip": {
+            "title": "Impuestos y propina",
+            "subtitle": "Opcionalmente agrega impuestos y propina al total.",
+            "taxLabel": "Impuestos",
+            "tipLabel": "Propina",
+            "noTip": "Sin propina",
+            "subtotal": "Subtotal",
+            "grandTotal": "Total general"
+        },
+        "review": {
+            "title": "Revisar Split",
+            "subtitle": "Verifica los detalles antes de crear tu split.",
+            "basicInfo": "Información básica",
+            "noParticipants": "Aún no se agregaron participantes.",
+            "readyToSubmit": "¡Todo se ve bien — listo para crear!"
+        },
+        "validation": {
+            "titleRequired": "Por favor ingresa un título para este split.",
+            "currencyRequired": "Por favor selecciona una moneda.",
+            "totalAmountRequired": "Por favor ingresa un monto total mayor a cero.",
+            "minParticipants": "Agrega al menos 2 participantes.",
+            "participantNameRequired": "Todos los participantes deben tener un nombre.",
+            "percentageMustEqual100": "Los porcentajes deben sumar 100%.",
+            "customMustEqualTotal": "Los montos personalizados deben sumar el total.",
+            "minOneItem": "Agrega al menos un artículo.",
+            "itemNameRequired": "Todos los artículos deben tener un nombre.",
+            "itemPriceRequired": "Todos los artículos deben tener un precio mayor a cero."
         }
     },
     "activityFeed": {

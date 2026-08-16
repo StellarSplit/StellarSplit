@@ -12,7 +12,12 @@
         "total": "Total",
         "date": "Date",
         "status": "Statut",
-        "close": "Fermer"
+        "close": "Fermer",
+        "receiptItems": "Articles du reçu",
+        "subtotal": "Sous-total avant taxes et pourboire",
+        "securedBy": "Sécurisé par le réseau Stellar",
+        "share": "Partager",
+        "copy": "Copier"
     },
     "split": {
         "title": "Titre de la Note",
@@ -138,6 +143,97 @@
             "createGroup": "Créer un groupe",
             "settleUp": "Régulariser",
             "viewReports": "Voir les rapports"
+        }
+    },
+    "wizard": {
+        "pageTitle": "Nouveau partage",
+        "saveDraft": "Enregistrer le brouillon",
+        "draftSaved": "Enregistré !",
+        "back": "Retour",
+        "next": "Suivant",
+        "createSplit": "Créer le partage",
+        "creating": "Création…",
+        "steps": {
+            "basicInfo": "Infos de base",
+            "splitMethod": "Méthode",
+            "participants": "Participants",
+            "items": "Articles",
+            "taxTip": "Taxes & pourboire",
+            "review": "Vérifier"
+        },
+        "basicInfo": {
+            "title": "Informations de base",
+            "subtitle": "Donnez un nom à votre partage et définissez le montant total.",
+            "splitTitle": "Titre du partage",
+            "splitTitlePlaceholder": "ex. Dîner chez Nobu",
+            "currency": "Devise",
+            "totalAmount": "Montant total"
+        },
+        "splitMethod": {
+            "title": "Méthode de partage",
+            "subtitle": "Choisissez comment diviser le total.",
+            "equal": "Partager équitablement",
+            "equalDesc": "Chaque personne paie le même montant.",
+            "itemized": "Par article",
+            "itemizedDesc": "Attribuez des articles spécifiques à chaque personne.",
+            "percentage": "Par pourcentage",
+            "percentageDesc": "Définissez un pourcentage personnalisé par personne.",
+            "custom": "Montants personnalisés",
+            "customDesc": "Saisissez des montants exacts pour chaque personne."
+        },
+        "participants": {
+            "title": "Ajouter des participants",
+            "subtitle": "Ajoutez toutes les personnes partageant cette dépense.",
+            "name": "Nom",
+            "namePlaceholder": "ex. Alice",
+            "walletAddress": "Adresse du portefeuille Stellar",
+            "walletPlaceholder": "G…",
+            "email": "E-mail",
+            "emailPlaceholder": "alice@example.com",
+            "percentage": "Pourcentage (%)",
+            "customAmount": "Montant personnalisé",
+            "addParticipant": "Ajouter un participant",
+            "participantN": "Participant {{n}}",
+            "remove": "Supprimer le participant",
+            "totalPct": "Pourcentage total",
+            "mustEqual100": "doit être égal à 100 %",
+            "totalCustom": "Total attribué"
+        },
+        "items": {
+            "title": "Ajouter des articles",
+            "subtitle": "Listez les articles du reçu et attribuez-les.",
+            "itemNamePlaceholder": "ex. Bœuf Wagyu",
+            "addItem": "Ajouter un article",
+            "removeItem": "Supprimer l'article",
+            "assignTo": "Attribuer à :"
+        },
+        "taxTip": {
+            "title": "Taxes & pourboire",
+            "subtitle": "Ajoutez optionnellement des taxes et un pourboire au total.",
+            "taxLabel": "Taxes",
+            "tipLabel": "Pourboire",
+            "noTip": "Pas de pourboire",
+            "subtotal": "Sous-total",
+            "grandTotal": "Total général"
+        },
+        "review": {
+            "title": "Vérifier le partage",
+            "subtitle": "Vérifiez les détails avant de créer votre partage.",
+            "basicInfo": "Infos de base",
+            "noParticipants": "Aucun participant ajouté pour le moment.",
+            "readyToSubmit": "Tout a l'air bon — prêt à créer !"
+        },
+        "validation": {
+            "titleRequired": "Veuillez saisir un titre pour ce partage.",
+            "currencyRequired": "Veuillez sélectionner une devise.",
+            "totalAmountRequired": "Veuillez saisir un montant total supérieur à zéro.",
+            "minParticipants": "Ajoutez au moins 2 participants.",
+            "participantNameRequired": "Tous les participants doivent avoir un nom.",
+            "percentageMustEqual100": "Les pourcentages doivent totaliser 100 %.",
+            "customMustEqualTotal": "Les montants personnalisés doivent correspondre au total.",
+            "minOneItem": "Ajoutez au moins un article.",
+            "itemNameRequired": "Tous les articles doivent avoir un nom.",
+            "itemPriceRequired": "Tous les articles doivent avoir un prix supérieur à zéro."
         }
     },
     "activityFeed": {

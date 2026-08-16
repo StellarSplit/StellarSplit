@@ -12,7 +12,12 @@
         "total": "总计",
         "date": "日期",
         "status": "状态",
-        "close": "关闭"
+        "close": "关闭",
+        "receiptItems": "小票项目",
+        "subtotal": "税前及小费前小计",
+        "securedBy": "由 Stellar 网络保护",
+        "share": "分享",
+        "copy": "复制"
     },
     "split": {
         "title": "账单标题",
@@ -138,6 +143,97 @@
             "createGroup": "创建群组",
             "settleUp": "结算",
             "viewReports": "查看报表"
+        }
+    },
+    "wizard": {
+        "pageTitle": "新建分账",
+        "saveDraft": "保存草稿",
+        "draftSaved": "已保存！",
+        "back": "返回",
+        "next": "下一步",
+        "createSplit": "创建分账",
+        "creating": "创建中…",
+        "steps": {
+            "basicInfo": "基本信息",
+            "splitMethod": "分摊方式",
+            "participants": "参与者",
+            "items": "项目",
+            "taxTip": "税费与小费",
+            "review": "确认"
+        },
+        "basicInfo": {
+            "title": "基本信息",
+            "subtitle": "为分账取名并设置总金额。",
+            "splitTitle": "分账标题",
+            "splitTitlePlaceholder": "例如：在 Nobu 的晚餐",
+            "currency": "货币",
+            "totalAmount": "总金额"
+        },
+        "splitMethod": {
+            "title": "分摊方式",
+            "subtitle": "选择如何分摊总金额。",
+            "equal": "均摊",
+            "equalDesc": "每人支付相同金额。",
+            "itemized": "按项目",
+            "itemizedDesc": "为每人分配具体项目。",
+            "percentage": "按百分比",
+            "percentageDesc": "为每人设置自定义百分比。",
+            "custom": "自定义金额",
+            "customDesc": "为每人输入精确金额。"
+        },
+        "participants": {
+            "title": "添加参与者",
+            "subtitle": "添加共享此费用的所有人。",
+            "name": "姓名",
+            "namePlaceholder": "例如：张三",
+            "walletAddress": "Stellar 钱包地址",
+            "walletPlaceholder": "G…",
+            "email": "邮箱",
+            "emailPlaceholder": "zhangsan@example.com",
+            "percentage": "百分比（%）",
+            "customAmount": "自定义金额",
+            "addParticipant": "添加参与者",
+            "participantN": "参与者 {{n}}",
+            "remove": "移除参与者",
+            "totalPct": "总百分比",
+            "mustEqual100": "必须等于 100%",
+            "totalCustom": "已分配总计"
+        },
+        "items": {
+            "title": "添加项目",
+            "subtitle": "列出小票中的项目并分配。",
+            "itemNamePlaceholder": "例如：和牛牛排",
+            "addItem": "添加项目",
+            "removeItem": "移除项目",
+            "assignTo": "分配给："
+        },
+        "taxTip": {
+            "title": "税费与小费",
+            "subtitle": "可选择添加税费和小费到总金额。",
+            "taxLabel": "税费",
+            "tipLabel": "小费",
+            "noTip": "无小费",
+            "subtotal": "小计",
+            "grandTotal": "总计（含税和小费）"
+        },
+        "review": {
+            "title": "确认分账",
+            "subtitle": "创建分账前请检查详情。",
+            "basicInfo": "基本信息",
+            "noParticipants": "尚未添加任何参与者。",
+            "readyToSubmit": "一切看起来不错——可以创建了！"
+        },
+        "validation": {
+            "titleRequired": "请输入分账标题。",
+            "currencyRequired": "请选择货币。",
+            "totalAmountRequired": "请输入大于零的总金额。",
+            "minParticipants": "请至少添加 2 位参与者。",
+            "participantNameRequired": "所有参与者必须填写姓名。",
+            "percentageMustEqual100": "百分比之和必须等于 100%。",
+            "customMustEqualTotal": "自定义金额之和必须等于总金额。",
+            "minOneItem": "请至少添加一个项目。",
+            "itemNameRequired": "所有项目必须填写名称。",
+            "itemPriceRequired": "所有项目必须填写大于零的价格。"
         }
     },
     "activityFeed": {
