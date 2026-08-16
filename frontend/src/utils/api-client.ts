@@ -642,3 +642,28 @@ export async function createActivityRecord(
     signal,
   })
 }
+
+
+export async function markActivitiesAsRead(
+  userId: string,
+  activityIds: string[],
+  signal?: AbortSignal,
+): Promise<{ updated: number }> {
+  return request<{ updated: number }, { activityIds: string[] }>({
+    method: 'patch',
+    endpoint: ApiRoutes.activities.markRead(userId),
+    data: { activityIds },
+    signal,
+  })
+}
+
+export async function markAllActivitiesAsRead(
+  userId: string,
+  signal?: AbortSignal,
+): Promise<{ updated: number }> {
+  return request<{ updated: number }>({
+    method: 'patch',
+    endpoint: ApiRoutes.activities.markAllRead(userId),
+    signal,
+  })
+}

@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { Bell } from "lucide-react";
 import { useDisclosure } from "../../hooks/useDisclosure";
@@ -25,6 +25,12 @@ export function NotificationBell() {
       return () => document.removeEventListener("click", handleClickOutside);
     }
   }, [isOpen, onClose]);
+
+  const syncFromServer = useNotificationsStore((state) => state.syncFromServer);
+
+  useEffect(() => {
+    syncFromServer();
+  }, [syncFromServer]);
 
   const visibleCount = hasHydrated ? unreadCount : 0;
 

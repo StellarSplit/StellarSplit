@@ -48,6 +48,9 @@ export const ApiRoutes = {
   activities: {
     byUser: (userId: string) => `/activities/${userId}`,
     create: () => '/activities',
+    markRead: (userId: string) => `/activities/${userId}/mark-read`,
+    markAllRead: (userId: string) => `/activities/${userId}/mark-all-read`,
+    unreadCount: (userId: string) => `/activities/${userId}/unread-count`,
   },
 
   analytics: {
