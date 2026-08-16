@@ -13,6 +13,12 @@ import { useTheme } from "../ThemeContext";
 
 interface DebtTrackerProps {
   data: DebtBalance[];
+  /** Render a loading skeleton instead of the chart (matches other analytics widgets). */
+  loading?: boolean;
+  /** When set, render an error state with a retry affordance. */
+  error?: string | null;
+  /** Triggered by the retry button in the error state. */
+  onRetry?: () => void;
 }
 
 function formatCurrency(value: number): string {
@@ -25,13 +31,70 @@ function cssVar(name: string): string {
     .trim();
 }
 
-export function DebtTracker({ data }: DebtTrackerProps) {
+export function DebtTracker({ data, loading = false, error = null, onRetry }: DebtTrackerProps) {
   const { resolvedTheme } = useTheme();
 
   const borderColor = cssVar("--color-border");
   const mutedColor = cssVar("--color-text-muted");
   const surfaceColor = cssVar("--color-surface");
   const textColor = cssVar("--color-text");
+
+  // ── Loading skeleton ──────────────────────────────────────────────────────
+  if (loading) {
+    return (
+      <div
+        className="bg-card-theme rounded-lg shadow border border-theme p-6 animate-pulse"
+        id="debt-tracker"
+        aria-busy="true"
+        aria-label="Debt tracker loading"
+      >
+        <div className="h-6 w-1/3 bg-muted-theme/30 rounded mb-4" />
+        <div className="grid grid-cols-3 gap-4 mb-6">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="h-20 bg-muted-theme/20 rounded-lg" />
+          ))}
+        </div>
+        <div className="w-full bg-muted-theme/20 rounded" style={{ height: 240 }} />
+      </div>
+    );
+  }
+
+  // ── Error state (with retry) ──────────────────────────────────────────────
+  if (error) {
+    return (
+      <div
+        className="bg-card-theme rounded-lg shadow border border-theme p-6 text-center"
+        id="debt-tracker"
+        role="alert"
+      >
+        <h2 className="text-xl font-bold text-theme mb-4">Debt Tracker</h2>
+        <p className="text-sm text-red-500 mb-4">{error}</p>
+        {onRetry ? (
+          <button
+            onClick={onRetry}
+            className="inline-flex items-center justify-center min-h-[2.25rem] px-4 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium transition-colors"
+          >
+            Try again
+          </button>
+        ) : null}
+      </div>
+    );
+  }
+
+  // ── Empty state ───────────────────────────────────────────────────────────
+  if (data.length === 0) {
+    return (
+      <div
+        className="bg-card-theme rounded-lg shadow border border-theme p-6 text-center"
+        id="debt-tracker"
+      >
+        <h2 className="text-xl font-bold text-theme mb-4">Debt Tracker</h2>
+        <p className="text-sm text-muted-theme">
+          You&apos;re all settled up 🎉
+        </p>
+      </div>
+    );
+  }
 
   const chartData = data.map((d) => ({
     ...d,

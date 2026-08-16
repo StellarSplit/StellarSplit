@@ -24,17 +24,20 @@ function defaultDateRange(): DateRange {
   };
 }
 
-export function useAnalytics(mode: AnalyticsMode = "hybrid"): UseAnalyticsReturn {
+export function useAnalytics(
+  mode: AnalyticsMode = "hybrid",
+  walletAddress?: string,
+): UseAnalyticsReturn {
   const [dateRange, setDateRange] = useState<DateRange>(defaultDateRange);
   const [source, setSource] = useState<AnalyticsSource | null>(null);
 
   const { data, loading, error, refetch } = useAbortableRequest(
     async (_signal: AbortSignal) => {
-      const result = await fetchAnalyticsBundle(dateRange, mode);
+      const result = await fetchAnalyticsBundle(dateRange, mode, walletAddress);
       setSource(result.source);
       return result.data;
     },
-    [dateRange, mode],
+    [dateRange, mode, walletAddress],
   );
 
   return { data, source, loading, error, dateRange, setDateRange, refetch };

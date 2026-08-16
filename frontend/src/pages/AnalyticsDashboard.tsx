@@ -3,6 +3,7 @@
  */
 import { lazy, Suspense } from "react";
 import { useAnalytics } from "../hooks/useAnalytics";
+import { useWallet } from "../hooks/use-wallet";
 import { BarChart3, RefreshCw } from "lucide-react";
 
 const SpendingChart     = lazy(() => import("../components/Analytics/SpendingChart").then(m => ({ default: m.SpendingChart })));
@@ -53,7 +54,8 @@ function ChartCard({ id, filename, children, wide = false }: ChartCardProps) {
 
 // ── Main dashboard ───────────────────────────────────────────────────────────
 export default function AnalyticsDashboard() {
-  const { data, source, loading, error, dateRange, setDateRange, refetch } = useAnalytics();
+  const { publicKey } = useWallet();
+  const { data, source, loading, error, dateRange, setDateRange, refetch } = useAnalytics("hybrid", publicKey ?? undefined);
 
   // ── Loading state ──────────────────────────────────────────────────────────
   if (loading) {

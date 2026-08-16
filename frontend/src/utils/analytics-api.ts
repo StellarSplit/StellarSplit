@@ -7,6 +7,7 @@ import { getAnalyticsData, type AnalyticsMode, type AnalyticsSource } from "../s
 export async function fetchAnalyticsBundle(
   range?: DateRange,
   mode: AnalyticsMode = "hybrid",
+  walletAddress?: string,
 ): Promise<{ data: AnalyticsData; source: AnalyticsSource }> {
-  return getAnalyticsData(range, mode);
+  return getAnalyticsData(range, mode, walletAddress);
 }

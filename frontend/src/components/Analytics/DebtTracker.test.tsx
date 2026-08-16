@@ -43,4 +43,31 @@ describe('DebtTracker', () => {
         const { container } = render(<DebtTracker data={mockData} />);
         expect(container.querySelector('#debt-tracker')).not.toBeNull();
     });
+
+    it('shows loading skeleton when loading is true', () => {
+        const { container } = render(<DebtTracker data={[]} loading={true} />);
+        expect(container.querySelector('#debt-tracker')).not.toBeNull();
+        expect(container.querySelector('[aria-busy="true"]')).not.toBeNull();
+        expect(screen.queryByText('Debt Tracker')).toBeNull();
+    });
+
+    it('shows empty state when data is empty', () => {
+        render(<DebtTracker data={[]} />);
+        expect(screen.getByText('Debt Tracker')).toBeDefined();
+        expect(screen.getByText(/all settled up/)).toBeDefined();
+    });
+
+    it('shows error state with retry button', () => {
+        const onRetry = vi.fn();
+        render(<DebtTracker data={[]} error="Failed to load" onRetry={onRetry} />);
+        expect(screen.getByText('Debt Tracker')).toBeDefined();
+        expect(screen.getByText('Failed to load')).toBeDefined();
+        expect(screen.getByText('Try again')).toBeDefined();
+    });
+
+    it('shows loading state over empty state when both are set', () => {
+        const { container } = render(<DebtTracker data={[]} loading={true} error={null} />);
+        expect(container.querySelector('[aria-busy="true"]')).not.toBeNull();
+        expect(screen.queryByText(/all settled up/)).toBeNull();
+    });
 });

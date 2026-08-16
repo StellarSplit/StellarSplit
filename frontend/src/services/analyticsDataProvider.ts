@@ -1,4 +1,5 @@
 import { apiClient } from "../utils/api-client";
+import { fetchDebtBalancesByWallet } from "./api/debtSimplificationApi";
 import type {
   SpendingTrend,
   CategoryBreakdown,
@@ -32,6 +33,7 @@ const MOCK_TOP_PARTNERS: TopPartner[] = [
   { partnerId: "u1", name: "Alice", totalAmount: 650, interactions: 14 },
   { partnerId: "u2", name: "Bob", totalAmount: 420, interactions: 9 },
 ];
+// Keep MOCK_DEBT_BALANCES as a test/storybook fixture, not a runtime fallback.
 const MOCK_DEBT_BALANCES: DebtBalance[] = [
   { userId: "u1", name: "Alice", amount: 45, direction: "owe" },
   { userId: "u2", name: "Bob", amount: 120.5, direction: "owed" },
@@ -59,7 +61,10 @@ function fixtureData(): AnalyticsData {
   };
 }
 
-async function fetchLive(range?: DateRange): Promise<AnalyticsData> {
+async function fetchLive(
+  range?: DateRange,
+  walletAddress?: string,
+): Promise<AnalyticsData> {
   const params = {
     ...(range?.dateFrom && { dateFrom: range.dateFrom }),
     ...(range?.dateTo && { dateTo: range.dateTo }),
@@ -75,7 +80,11 @@ async function fetchLive(range?: DateRange): Promise<AnalyticsData> {
     apiClient.get<SpendingTrend[]>("/api/analytics/spending-trends", { params }),
     apiClient.get<CategoryBreakdown[]>("/api/analytics/category-breakdown", { params }),
     apiClient.get<TopPartner[]>("/api/analytics/top-partners", { params }),
-    Promise.resolve({ data: MOCK_DEBT_BALANCES }),
+    // Wire debt balances to the live /debt-simplification API when a wallet
+    // address is available; fall back to fixture data otherwise.
+    walletAddress
+      ? fetchDebtBalancesByWallet(walletAddress).then((data) => ({ data }))
+      : Promise.resolve({ data: MOCK_DEBT_BALANCES }),
     Promise.resolve({ data: MOCK_HEATMAP }),
     Promise.resolve({ data: MOCK_TIME_DISTRIBUTION }),
   ]);
@@ -92,15 +101,16 @@ async function fetchLive(range?: DateRange): Promise<AnalyticsData> {
 export async function getAnalyticsData(
   range?: DateRange,
   mode: AnalyticsMode = "hybrid",
+  walletAddress?: string,
 ): Promise<AnalyticsResult> {
   if (mode === "fixture-only") {
     return { data: fixtureData(), source: "fixture" };
   }
   if (mode === "live-only") {
-    return { data: await fetchLive(range), source: "live" };
+    return { data: await fetchLive(range, walletAddress), source: "live" };
   }
   try {
-    return { data: await fetchLive(range), source: "live" };
+    return { data: await fetchLive(range, walletAddress), source: "live" };
   } catch {
     return { data: fixtureData(), source: "fixture" };
   }
