@@ -157,5 +157,10 @@
         "zh": "Chinesisch",
         "ja": "Japanisch",
         "pt": "Portugiesisch"
+    },
+    "wizard": {
+        "validation": {
+            "invalidWalletAddress": "This doesn't look like a valid Stellar address"
+        }
     }
 }

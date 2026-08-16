@@ -233,7 +233,8 @@
             "customMustEqualTotal": "Custom amounts must add up to the total.",
             "minOneItem": "Add at least one item.",
             "itemNameRequired": "All items must have a name.",
-            "itemPriceRequired": "All items must have a price greater than zero."
+            "itemPriceRequired": "All items must have a price greater than zero.",
+            "invalidWalletAddress": "This doesn't look like a valid Stellar address"
         }
     },
     "activityFeed": {

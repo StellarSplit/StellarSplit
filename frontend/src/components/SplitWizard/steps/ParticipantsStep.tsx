@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { StrKey } from '@stellar/stellar-sdk';
 import { useTranslation } from 'react-i18next';
 import { UserPlus, Trash2, Percent, Sliders } from 'lucide-react';
 import type { WizardParticipant, WizardState, SplitMethod } from '../../../types/wizard';
@@ -26,6 +27,20 @@ const showExtraField = (method: SplitMethod) =>
 export const ParticipantsStep = ({ value, onChange, errors }: ParticipantsStepProps) => {
     const { t } = useTranslation();
     const [expanded, setExpanded] = useState<string | null>(null);
+    const [touchedWallets, setTouchedWallets] = useState<Set<string>>(new Set());
+
+    const markWalletTouched = (id: string) => {
+        setTouchedWallets((prev) => new Set(prev).add(id));
+    };
+
+    const getWalletError = (participant: WizardParticipant): string | undefined => {
+        const wallet = participant.walletAddress?.trim() ?? '';
+        if (!wallet || !touchedWallets.has(participant.id)) return undefined;
+        return errors[`wallet-${participant.id}`] ||
+            (!StrKey.isValidEd25519PublicKey(wallet)
+                ? t('wizard.validation.invalidWalletAddress')
+                : undefined);
+    };
 
     const updateParticipant = (id: string, patch: Partial<WizardParticipant>) => {
         onChange({
@@ -66,7 +81,9 @@ export const ParticipantsStep = ({ value, onChange, errors }: ParticipantsStepPr
 
             {/* Participant cards */}
             <div className="space-y-3" role="list" aria-label="Participants list">
-                {value.participants.map((p, index) => (
+                {value.participants.map((p, index) => {
+                    const walletError = getWalletError(p);
+                    return (
                     <div key={p.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm" role="listitem">
                         {/* Card header */}
                         <div
@@ -143,9 +160,21 @@ export const ParticipantsStep = ({ value, onChange, errors }: ParticipantsStepPr
                                         type="text"
                                         value={p.walletAddress ?? ''}
                                         onChange={(e) => updateParticipant(p.id, { walletAddress: e.target.value })}
+                                        onBlur={() => markWalletTouched(p.id)}
                                         placeholder={t('wizard.participants.walletPlaceholder')}
-                                        className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-400 font-mono"
+                                        aria-invalid={walletError ? 'true' : undefined}
+                                        aria-describedby={walletError ? `wallet-${p.id}-error` : undefined}
+                                        className={`w-full px-3 py-2 rounded-lg border text-sm placeholder-gray-400 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-400 font-mono ${
+                                            walletError
+                                                ? 'border-red-400 dark:border-red-500 text-red-900 dark:text-red-100'
+                                                : 'border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100'
+                                        }`}
                                     />
+                                    {walletError && (
+                                        <p id={`wallet-${p.id}-error`} className="text-xs text-red-500" role="alert">
+                                            {walletError}
+                                        </p>
+                                    )}
                                 </div>
                                 <div className="space-y-1">
                                     <label 
@@ -210,7 +239,8 @@ export const ParticipantsStep = ({ value, onChange, errors }: ParticipantsStepPr
                             </div>
                         )}
                     </div>
-                ))}
+                    );
+                })}
             </div>
 
             {/* Percentage / custom totals */}

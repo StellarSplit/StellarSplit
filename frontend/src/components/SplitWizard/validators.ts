@@ -1,3 +1,4 @@
+import { StrKey } from '@stellar/stellar-sdk';
 import type { WizardState } from '../../types/wizard';
 
 type Errors = Record<string, string>;
@@ -27,6 +28,16 @@ export const validateParticipants = (
 
     const hasValidWallet = value.participants.some((p) => p.walletAddress && p.walletAddress.trim().length > 0);
     if (!hasValidWallet) errors.participants = 'Add at least one participant with a valid wallet address';
+
+    // Per-participant Stellar public key format validation.
+    // A typed wallet address must be a syntactically valid ed25519 public key (G...),
+    // otherwise a typo's surface is deferred to contract-call time (or worse, silently).
+    value.participants.forEach((p) => {
+        const wallet = p.walletAddress?.trim() ?? '';
+        if (wallet && !StrKey.isValidEd25519PublicKey(wallet)) {
+            errors[`wallet-${p.id}`] = t('wizard.validation.invalidWalletAddress');
+        }
+    });
 
     if (value.splitMethod === 'percentage') {
         const total = value.participants.reduce((acc, p) => acc + (p.percentage ?? 0), 0);

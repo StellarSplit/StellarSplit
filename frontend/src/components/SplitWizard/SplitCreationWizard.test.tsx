@@ -40,8 +40,8 @@ describe('validateParticipants', () => {
     const base: WizardState = {
         ...INITIAL_WIZARD_STATE,
         participants: [
-            { id: '1', name: 'Alice', percentage: 50, customAmount: 0 },
-            { id: '2', name: 'Bob', percentage: 50, customAmount: 0 },
+            { id: '1', name: 'Alice', walletAddress: 'GCSHT2OAA4HAGDYSJFR4RR5WGK3IMCBNTPVP3XTEY3IYNNUZ33U3DPN3', percentage: 50, customAmount: 0 },
+            { id: '2', name: 'Bob', walletAddress: 'GAYDMBV2QPNNFQQRLELQ4PPGMO7NHCHKMJ5QDMI6OABGQWEDONV7PKOV', percentage: 50, customAmount: 0 },
         ],
         totalAmount: 100,
     };
@@ -93,6 +93,54 @@ describe('validateParticipants', () => {
             t
         );
         expect(errors.participants).toBeDefined();
+    });
+
+    it('rejects a participant with a malformed Stellar wallet address', () => {
+        const errors = validateParticipants(
+            {
+                ...base,
+                splitMethod: 'equal',
+                participants: [
+                    { id: '1', name: 'Alice', walletAddress: 'GA5X6M5M5M5M5M5M5M5M5M5M5M5M5M5M5M5M5M5M5M5M5M5M5M5' },
+                    { id: '2', name: 'Bob', walletAddress: '' },
+                ],
+            },
+            t
+        );
+        expect(errors['wallet-1']).toBeDefined();
+        expect(errors['wallet-1']).toBe('wizard.validation.invalidWalletAddress');
+    });
+
+    it('passes participants with valid Stellar public keys', () => {
+        const errors = validateParticipants(
+            {
+                ...base,
+                splitMethod: 'equal',
+                participants: [
+                    { id: '1', name: 'Alice', walletAddress: 'GCSHT2OAA4HAGDYSJFR4RR5WGK3IMCBNTPVP3XTEY3IYNNUZ33U3DPN3' },
+                    { id: '2', name: 'Bob', walletAddress: 'GAYDMBV2QPNNFQQRLELQ4PPGMO7NHCHKMJ5QDMI6OABGQWEDONV7PKOV' },
+                ],
+            },
+            t
+        );
+        expect(errors['wallet-1']).toBeUndefined();
+        expect(errors['wallet-2']).toBeUndefined();
+    });
+
+    it('ignores empty wallet address fields', () => {
+        const errors = validateParticipants(
+            {
+                ...base,
+                splitMethod: 'equal',
+                participants: [
+                    { id: '1', name: 'Alice' },
+                    { id: '2', name: 'Bob', walletAddress: '' },
+                ],
+            },
+            t
+        );
+        expect(errors['wallet-1']).toBeUndefined();
+        expect(errors['wallet-2']).toBeUndefined();
     });
 });
 
@@ -147,7 +195,7 @@ vi.mock('react-router-dom', async () => {
 
 vi.mock('../../hooks/use-wallet', () => ({
     useWallet: () => ({
-        activeUserId: 'GCKF6JB5YV22K6R5VTR7W3M2CY2K4QJZ2A6XHZL2RTPE5L77W4LLDWEZ',
+        activeUserId: 'GAYDMBV2QPNNFQQRLELQ4PPGMO7NHCHKMJ5QDMI6OABGQWEDONV7PKOV',
     }),
 }));
 
@@ -264,10 +312,15 @@ describe('SplitCreationWizard navigation', () => {
         fireEvent.change(screen.getByPlaceholderText('wizard.participants.namePlaceholder'), {
             target: { value: 'Alice' },
         });
+        // Fill in wallet address for Alice
+        const walletInputs = screen.getAllByPlaceholderText('wizard.participants.walletPlaceholder');
+        fireEvent.change(walletInputs[0], { target: { value: 'GCSHT2OAA4HAGDYSJFR4RR5WGK3IMCBNTPVP3XTEY3IYNNUZ33U3DPN3' } });
         fireEvent.click(screen.getByText('wizard.participants.addParticipant'));
         fireEvent.change(screen.getByPlaceholderText('wizard.participants.namePlaceholder'), {
             target: { value: 'Bob' },
         });
+        // Fill in wallet address for Bob
+        fireEvent.change(walletInputs[0], { target: { value: 'GAYDMBV2QPNNFQQRLELQ4PPGMO7NHCHKMJ5QDMI6OABGQWEDONV7PKOV' } });
         fireEvent.click(screen.getByText('wizard.next'));
 
         fireEvent.click(screen.getByText('wizard.next'));
@@ -277,7 +330,7 @@ describe('SplitCreationWizard navigation', () => {
         expect(createSplitMock).toHaveBeenCalledWith(
             expect.objectContaining({
                 description: 'Dinner with friends',
-                creatorWalletAddress: 'GCKF6JB5YV22K6R5VTR7W3M2CY2K4QJZ2A6XHZL2RTPE5L77W4LLDWEZ',
+                creatorWalletAddress: 'GAYDMBV2QPNNFQQRLELQ4PPGMO7NHCHKMJ5QDMI6OABGQWEDONV7PKOV',
                 preferredCurrency: 'USD',
                 totalAmount: 120,
                 participants: expect.arrayContaining([
