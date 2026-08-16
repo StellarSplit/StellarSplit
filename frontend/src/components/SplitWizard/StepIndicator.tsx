@@ -30,6 +30,14 @@ export const StepIndicator = ({ steps, currentStep, onStepClick }: StepIndicator
                     const isCompleted = index < currentStep;
                     const isActive = index === currentStep;
 
+                    const stepStateLabel = isActive
+                        ? 'current step'
+                        : isCompleted
+                            ? 'completed'
+                            : 'upcoming';
+
+                    const stepAriaLabel = `Step ${index + 1} of ${steps.length}: ${step.label}, ${stepStateLabel}`;
+
                     const circleContent = (
                         <div
                             className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-300 text-xs font-bold
@@ -75,16 +83,9 @@ export const StepIndicator = ({ steps, currentStep, onStepClick }: StepIndicator
                         <li
                             key={index}
                             aria-current={isActive ? 'step' : undefined}
+                            aria-label={stepAriaLabel}
                             className="flex flex-col items-center flex-1"
                         >
-                            <span className="sr-only">
-                                {isActive
-                                    ? `Step ${index + 1} of ${steps.length}: ${step.label}, current step`
-                                    : isCompleted
-                                        ? `Step ${index + 1}: ${step.label}, completed`
-                                        : `Step ${index + 1}: ${step.label}`
-                                }
-                            </span>
                             {stepButton}
                             {stepLabel}
                         </li>
