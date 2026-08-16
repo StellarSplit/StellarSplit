@@ -1,4 +1,5 @@
 import { X, Copy, QrCode, Share2 } from 'lucide-react';
+import { useAccessibility } from '../../hooks/useAccessibility';
 import { useTranslation } from 'react-i18next';
 import { shareOrCopy, copyToClipboard } from '../../utils/browserShare';
 
@@ -10,6 +11,7 @@ interface ShareModalProps {
 
 export const ShareModal = ({ isOpen, onClose, splitLink }: ShareModalProps) => {
     const { t } = useTranslation();
+    const { prefersReducedMotion } = useAccessibility();
 
     if (!isOpen) return null;
 
@@ -50,7 +52,7 @@ export const ShareModal = ({ isOpen, onClose, splitLink }: ShareModalProps) => {
                 tabIndex={-1}
                 aria-hidden="true"
             />
-            <div className="relative bg-white dark:bg-gray-800 rounded-t-3xl md:rounded-2xl w-full max-w-sm p-6 shadow-xl animate-in slide-in-from-bottom md:slide-in-from-bottom-0 md:zoom-in-95 duration-300">
+            <div className={`relative bg-white dark:bg-gray-800 rounded-t-3xl md:rounded-2xl w-full max-w-sm p-6 shadow-xl ${prefersReducedMotion ? "" : "animate-in slide-in-from-bottom md:slide-in-from-bottom-0 md:zoom-in-95 duration-300"}`}>
 
                 <div className="w-12 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-6 md:hidden" aria-hidden="true" />
 

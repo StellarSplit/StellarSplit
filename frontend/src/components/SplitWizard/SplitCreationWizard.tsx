@@ -15,6 +15,7 @@ import {
     validateItems,
 } from './validators';
 import { useWallet } from '../../hooks/use-wallet';
+import { useAccessibility, useAnnounce } from '../../hooks/useAccessibility';
 import type { WizardState } from '../../types/wizard';
 import { INITIAL_WIZARD_STATE } from '../../types/wizard';
 import { calculateWizardSplit } from '../../utils/split-calculations';
@@ -38,6 +39,8 @@ export const SplitCreationWizard = () => {
     const navigate = useNavigate();
     const announceRef = useRef<HTMLDivElement>(null);
     const { activeUserId } = useWallet();
+    const { prefersReducedMotion } = useAccessibility();
+    const { announce } = useAnnounce();
 
     const [wizardState, setWizardState] = useState<WizardState>(loadDraft);
     const [currentStep, setCurrentStep] = useState(0);
@@ -221,15 +224,19 @@ export const SplitCreationWizard = () => {
                 },
             }).catch(() => undefined);
 
+            // Screen-reader announcement: split successfully created
+            announce(`Split "${wizardState.title.trim()}" created successfully.`);
+
             draftRegistry.delete('wizard');
             navigate(`/split/${createdSplit.id}`);
         } catch (error) {
             const fieldErrors = getApiFieldErrors(error);
-            setErrors(
-                Object.keys(fieldErrors).length > 0
-                    ? fieldErrors
-                    : { submit: getApiErrorMessage(error) },
-            );
+            const submitError = Object.keys(fieldErrors).length > 0
+                ? fieldErrors
+                : { submit: getApiErrorMessage(error) };
+            setErrors(submitError);
+            // Screen-reader announcement: split creation failed
+            announce(`Failed to create split: ${submitError.submit || 'unknown error'}`);
         } finally {
             setIsSubmitting(false);
         }
@@ -324,17 +331,19 @@ export const SplitCreationWizard = () => {
                         {draftSaved ? t('wizard.draftSaved') : t('wizard.saveDraft')}
                     </button>
                 </div>
-                <StepIndicator steps={ALL_STEPS} currentStep={currentStep} />
+                <StepIndicator steps={ALL_STEPS} currentStep={currentStep} prefersReducedMotion={prefersReducedMotion} />
             </div>
 
             {/* Step content */}
             <div className="max-w-lg mx-auto px-4 py-6">
                 {errors.submit ? (
-                    <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                    <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
                         {errors.submit}
                     </div>
                 ) : null}
-                {renderStep()}
+                <div className={prefersReducedMotion ? "wizard-step-panel" : "wizard-step-panel animate-in fade-in duration-200"}>
+                    {renderStep()}
+                </div>
             </div>
 
             {/* Navigation footer */}

@@ -374,3 +374,38 @@ body {
     background-color: #f0fdf4;
   }
 }
+
+/* ── Reduced motion — JS hook wiring (useAccessibility) ──────────── */
+/* The .reduced-motion class is applied to the app root by RootLayout,
+   which reads usePrefersReducedMotion() from useAccessibility. It
+   complements the native @media query above by gating transitions on
+   components whose animation classes are applied unconditionally
+   (wizard step content, modal enter/exit, step indicator progress). */
+
+.reduced-motion *,
+.reduced-motion *::before,
+.reduced-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  transition-delay: 0s !important;
+  scroll-behavior: auto !important;
+}
+
+/* Step indicator progress bar — still show progress statically */
+.reduced-motion .step-progress-fill {
+  transition: none !important;
+}
+
+/* Modal panels — drop enter/exit animation entirely */
+.reduced-motion .animate-in,
+.reduced-motion [class*="animate-in"],
+.reduced-motion [class*="zoom-in-"],
+.reduced-motion [class*="slide-in-from-"] {
+  animation: none !important;
+}
+
+/* Wizard step content — no slide/fade */
+.reduced-motion .wizard-step-panel {
+  animation: none !important;
+}

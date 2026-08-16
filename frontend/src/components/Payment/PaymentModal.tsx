@@ -1,4 +1,5 @@
 import { X, ShieldCheck } from 'lucide-react';
+import { useAccessibility } from '../../hooks/useAccessibility';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency } from '../../utils/format';
 import { useMemo, useState } from 'react';
@@ -32,6 +33,7 @@ export const PaymentModal = ({
     isProcessing: externalIsProcessing
 }: PaymentModalProps) => {
     const { t } = useTranslation();
+    const { prefersReducedMotion } = useAccessibility();
     const {
         canTransact,
         connect,
@@ -88,7 +90,7 @@ export const PaymentModal = ({
                 tabIndex={-1}
                 aria-hidden="true"
             />
-            <div className="relative bg-white dark:bg-gray-800 rounded-2xl w-full max-w-sm p-6 shadow-xl animate-in fade-in zoom-in-95 duration-200">
+            <div className={`relative bg-white dark:bg-gray-800 rounded-2xl w-full max-w-sm p-6 shadow-xl ${prefersReducedMotion ? "" : "animate-in fade-in zoom-in-95 duration-200"}`}>
                 <button 
                     onClick={onClose} 
                     className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] rounded-full p-1"

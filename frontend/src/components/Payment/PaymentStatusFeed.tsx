@@ -13,6 +13,7 @@ import type {
     SplitCompletionEvent,
     FeedStatus,
 } from '../../hooks/usePaymentFeed';
+import { useAccessibility, useAnnounce } from '../../hooks/useAccessibility';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -41,9 +42,10 @@ const STATUS_COLORS: Record<string, string> = {
 interface PaymentRowProps {
     event: PaymentStatusEvent;
     isHighlighted: boolean;
+    prefersReducedMotion?: boolean;
 }
 
-function PaymentRow({ event, isHighlighted }: PaymentRowProps) {
+function PaymentRow({ event, isHighlighted, prefersReducedMotion = false }: PaymentRowProps) {
     const label = event.payerLabel || shortenAddress(event.payerId);
     const statusColor = STATUS_COLORS[event.status] ?? 'text-gray-500';
 
@@ -51,7 +53,8 @@ function PaymentRow({ event, isHighlighted }: PaymentRowProps) {
         <li
             className={[
                 'flex items-center justify-between gap-3 rounded-xl px-4 py-3',
-                'border transition-all duration-500',
+                'border',
+                prefersReducedMotion ? '' : 'transition-all duration-500',
                 isHighlighted
                     ? 'border-green-300 bg-green-50 dark:border-green-700 dark:bg-green-900/20 payment-flash'
                     : 'border-transparent bg-white/60 dark:bg-white/5',
@@ -84,9 +87,10 @@ function PaymentRow({ event, isHighlighted }: PaymentRowProps) {
 interface CelebrationBannerProps {
     event: SplitCompletionEvent;
     onDismiss: () => void;
+    prefersReducedMotion?: boolean;
 }
 
-function CelebrationBanner({ event, onDismiss }: CelebrationBannerProps) {
+function CelebrationBanner({ event, onDismiss, prefersReducedMotion = false }: CelebrationBannerProps) {
     // Focus the dismiss button automatically for keyboard users
     const btnRef = useRef<HTMLButtonElement>(null);
     useEffect(() => {
@@ -95,22 +99,24 @@ function CelebrationBanner({ event, onDismiss }: CelebrationBannerProps) {
 
     return (
         <>
-            {/* CSS-only confetti overlay — suppressed via prefers-reduced-motion in index.css */}
-            <div className="confetti-overlay" aria-hidden="true">
-                {Array.from({ length: 30 }).map((_, i) => (
-                    <span
-                        key={i}
-                        className="confetti-piece"
-                        style={
-                            {
-                                '--delay': `${(i * 0.12).toFixed(2)}s`,
-                                '--left': `${Math.floor(Math.random() * 100)}%`,
-                                '--hue': `${Math.floor(Math.random() * 360)}`,
-                            } as React.CSSProperties
-                        }
-                    />
-                ))}
-            </div>
+            {/* CSS-only confetti overlay — suppressed via prefers-reduced-motion or JS hook */}
+            {!prefersReducedMotion && (
+                <div className="confetti-overlay" aria-hidden="true">
+                    {Array.from({ length: 30 }).map((_, i) => (
+                        <span
+                            key={i}
+                            className="confetti-piece"
+                            style={
+                                {
+                                    '--delay': `${(i * 0.12).toFixed(2)}s`,
+                                    '--left': `${Math.floor(Math.random() * 100)}%`,
+                                    '--hue': `${Math.floor(Math.random() * 360)}`,
+                                } as React.CSSProperties
+                            }
+                        />
+                    ))}
+                </div>
+            )}
 
             {/* Banner */}
             <div
@@ -144,7 +150,7 @@ function CelebrationBanner({ event, onDismiss }: CelebrationBannerProps) {
 
 // ─── Connection Badge ─────────────────────────────────────────────────────────
 
-function ConnectionBadge({ status }: { status: FeedStatus }) {
+function ConnectionBadge({ status, prefersReducedMotion = false }: { status: FeedStatus; prefersReducedMotion?: boolean }) {
     const map: Record<FeedStatus, { label: string; color: string }> = {
         connected: { label: 'Live', color: 'bg-green-500' },
         connecting: { label: 'Connecting', color: 'bg-yellow-400' },
@@ -155,7 +161,7 @@ function ConnectionBadge({ status }: { status: FeedStatus }) {
 
     return (
         <span className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-            <span className={`inline-block h-2 w-2 rounded-full ${color} ${status === 'connected' ? 'animate-pulse' : ''}`} />
+            <span className={`inline-block h-2 w-2 rounded-full ${color} ${!prefersReducedMotion && status === 'connected' ? 'animate-pulse' : ''}`} />
             {label}
         </span>
     );
@@ -178,6 +184,8 @@ export function PaymentStatusFeed({
 }: PaymentStatusFeedProps) {
     const [highlightedTxHash, setHighlightedTxHash] = useState<string | null>(null);
     const [isDismissed, setIsDismissed] = useState(false);
+    const { prefersReducedMotion } = useAccessibility();
+    const { announce } = useAnnounce();
 
     // Flash the row that just arrived
     useEffect(() => {
@@ -187,10 +195,13 @@ export function PaymentStatusFeed({
         return () => clearTimeout(timer);
     }, [latestEvent]);
 
-    // Re-show banner if a new completion arrives
+    // Re-show banner if a new completion arrives, and announce it
     useEffect(() => {
-        if (completionEvent) setIsDismissed(false);
-    }, [completionEvent]);
+        if (completionEvent) {
+            setIsDismissed(false);
+            announce(`All settled! ${completionEvent.totalAmount.toFixed(2)} ${completionEvent.currency} collected in full.`);
+        }
+    }, [completionEvent, announce]);
 
     return (
         <section aria-label="Live payment updates" className="mt-6 space-y-3">
@@ -200,7 +211,7 @@ export function PaymentStatusFeed({
                     <Zap size={15} className="text-purple-500" />
                     Payment Activity
                 </h2>
-                <ConnectionBadge status={status} />
+                <ConnectionBadge status={status} prefersReducedMotion={prefersReducedMotion} />
             </div>
 
             {/* Celebration banner */}
@@ -208,6 +219,7 @@ export function PaymentStatusFeed({
                 <CelebrationBanner
                     event={completionEvent}
                     onDismiss={() => setIsDismissed(true)}
+                    prefersReducedMotion={prefersReducedMotion}
                 />
             )}
 
@@ -228,6 +240,7 @@ export function PaymentStatusFeed({
                             key={`${event.txHash}-${event.timestamp}`}
                             event={event}
                             isHighlighted={event.txHash === highlightedTxHash}
+                            prefersReducedMotion={prefersReducedMotion}
                         />
                     ))}
                 </ul>

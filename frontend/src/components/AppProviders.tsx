@@ -3,13 +3,14 @@ import { ThemeProvider } from "./ThemeContext";
 import { WalletProvider } from "../hooks/use-wallet";
 import { CollaborationProvider } from "./Collaboration";
 import InstallPrompt from "./InstallPrompt";
+import { LiveRegion } from "./LiveRegion";
 
 export function AppProviders({ children }: { children: ReactNode }) {
   return (
     <ThemeProvider>
       <WalletProvider>
         <CollaborationProvider>
-          <div role="status" aria-live="polite" aria-atomic="true" className="sr-only" />
+          <LiveRegion />
           <InstallPrompt />
           {children}
         </CollaborationProvider>

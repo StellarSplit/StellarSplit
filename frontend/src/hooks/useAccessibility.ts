@@ -18,6 +18,11 @@ export function useAccessibility(): AccessibilityPreferences {
   });
 
   useEffect(() => {
+    // Guard against environments without matchMedia (jsdom, SSR)
+    if (typeof window.matchMedia !== 'function') {
+      return;
+    }
+
     // Check for reduced motion preference
     const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     const contrastQuery = window.matchMedia('(prefers-contrast: more)');

@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
 import type { PaymentResult as PaymentResultData } from "../../types/payment";
+import { useAnnounce } from "../../hooks/useAccessibility";
 
 interface Props {
   result: PaymentResultData;
@@ -8,6 +9,17 @@ interface Props {
 }
 
 export const PaymentResult: React.FC<Props> = ({ result, onRetry, onBackToSplit }) => {
+  const { announce } = useAnnounce();
+
+  // Announce the payment outcome to screen readers whenever it changes.
+  useEffect(() => {
+    if (result.success) {
+      announce(`Payment successful. Transaction hash ${result.txHash}`);
+    } else {
+      announce(`Payment failed. ${result.error ?? "Unknown error"}`);
+    }
+  }, [result.success, result.txHash, result.error, announce]);
+
   if (result.success) {
     return (
       <div>

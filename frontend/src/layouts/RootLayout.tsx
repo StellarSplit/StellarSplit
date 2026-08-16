@@ -2,6 +2,7 @@ import { Component, type ReactNode, useEffect, useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
+import { useAccessibility } from "../hooks/useAccessibility";
 
 type ShellErrorBoundaryProps = {
   children: ReactNode;
@@ -71,6 +72,7 @@ const STORAGE_KEY = "sidebar-open";
 
 export default function RootLayout() {
   const { pathname } = useLocation();
+  const { prefersReducedMotion } = useAccessibility();
 
   // Desktop: restore saved preference. Mobile: always start closed.
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(() => {
@@ -96,20 +98,17 @@ export default function RootLayout() {
   const toggle = () => setIsSidebarOpen((v) => !v);
 
   return (
-    <div className="min-h-screen bg-theme text-theme">
+    <div
+      className={
+        "min-h-screen bg-theme text-theme" +
+        (prefersReducedMotion ? " reduced-motion" : "")
+      }
+    >
       <Sidebar
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
       />
 
-      {/*
-       * On desktop (lg+): shift the content column right when the sidebar
-       * is open. lg:pl-[14rem] is applied only when isSidebarOpen is true.
-       * On mobile: sidebar overlays (fixed + backdrop) so no padding shift.
-       *
-       * transition-[padding-left] animates the shift to match the sidebar
-       * slide (280ms cubic-bezier matches Sidebar.tsx transition value).
-       */}
       <div
         className={[
           "min-h-screen",
