@@ -11,10 +11,6 @@ import { WebhookEventType } from './webhook.entity';
 
 describe('WebhooksController', () => {
   let controller: WebhooksController;
-  let webhooksService: WebhooksService;
-  let deliveryService: WebhookDeliveryService;
-  let policyService: WebhookPolicyService;
-  let testDispatcher: TestWebhookDispatcher;
 
   const mockWebhooksService = {
     create: jest.fn(),
@@ -67,10 +63,6 @@ describe('WebhooksController', () => {
     }).compile();
 
     controller = module.get<WebhooksController>(WebhooksController);
-    webhooksService = module.get<WebhooksService>(WebhooksService);
-    deliveryService = module.get<WebhookDeliveryService>(WebhookDeliveryService);
-    policyService = module.get<WebhookPolicyService>(WebhookPolicyService);
-    testDispatcher = module.get<TestWebhookDispatcher>(TestWebhookDispatcher);
   });
 
   afterEach(() => {
@@ -82,10 +74,14 @@ describe('WebhooksController', () => {
       const createDto: CreateWebhookDto = {
         url: 'https://example.com/webhook',
         events: [WebhookEventType.SPLIT_CREATED],
-        secret: 'test-secret',
       };
 
-      const webhook = { id: 'webhook-123', userId: mockUser.id, ...createDto };
+      const webhook = {
+        id: 'webhook-123',
+        userId: mockUser.id,
+        ...createDto,
+        secret: 'generated-secret',
+      };
       mockWebhooksService.create.mockResolvedValue(webhook);
 
       const result = await controller.create(createDto, mockUser);

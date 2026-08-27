@@ -1,6 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { WebhooksService } from './webhooks.service';
 import { Webhook, WebhookEventType } from './webhook.entity';
 import { CreateWebhookDto } from './dto/create-webhook.dto';
@@ -9,7 +8,6 @@ import { NotFoundException, BadRequestException } from '@nestjs/common';
 
 describe('WebhooksService', () => {
   let service: WebhooksService;
-  let repository: Repository<Webhook>;
 
   const mockRepository = {
     create: jest.fn(),
@@ -32,7 +30,6 @@ describe('WebhooksService', () => {
     }).compile();
 
     service = module.get<WebhooksService>(WebhooksService);
-    repository = module.get<Repository<Webhook>>(getRepositoryToken(Webhook));
   });
 
   afterEach(() => {
@@ -45,30 +42,55 @@ describe('WebhooksService', () => {
         userId: 'user-123',
         url: 'https://example.com/webhook',
         events: [WebhookEventType.SPLIT_CREATED],
-        secret: 'test-secret',
       };
 
-      const webhook = {
+      mockRepository.create.mockImplementation((data) => ({
         id: 'webhook-123',
-        ...createDto,
-        isActive: true,
-        failureCount: 0,
+        ...data,
+      }));
+      mockRepository.save.mockImplementation(async (data) => ({
+        ...data,
         createdAt: new Date(),
         updatedAt: new Date(),
-      };
-
-      mockRepository.create.mockReturnValue(webhook);
-      mockRepository.save.mockResolvedValue(webhook);
+      }));
 
       const result = await service.create(createDto);
 
       expect(mockRepository.create).toHaveBeenCalledWith({
-        ...createDto,
+        userId: createDto.userId,
+        url: createDto.url,
+        events: createDto.events,
+        secret: expect.stringMatching(/^[a-f0-9]{64}$/),
         isActive: true,
         failureCount: 0,
       });
       expect(mockRepository.save).toHaveBeenCalled();
-      expect(result).toEqual(webhook);
+      expect(result.secret).toHaveLength(64);
+      expect(result.secret).toMatch(/^[a-f0-9]+$/);
+    });
+
+    it('should ignore client-supplied secrets and generate its own', async () => {
+      const createDto = {
+        userId: 'user-123',
+        url: 'https://example.com/webhook',
+        events: [WebhookEventType.SPLIT_CREATED],
+        secret: 'a',
+      } as CreateWebhookDto & { secret: string };
+
+      mockRepository.create.mockImplementation((data) => ({
+        id: 'webhook-123',
+        ...data,
+      }));
+      mockRepository.save.mockImplementation(async (data) => data);
+
+      const result = await service.create(createDto);
+
+      expect(mockRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          secret: expect.stringMatching(/^[a-f0-9]{64}$/),
+        }),
+      );
+      expect(result.secret).not.toBe(createDto.secret);
     });
 
     it('should throw BadRequestException for invalid URL', async () => {
@@ -76,7 +98,6 @@ describe('WebhooksService', () => {
         userId: 'user-123',
         url: 'invalid-url',
         events: [WebhookEventType.SPLIT_CREATED],
-        secret: 'test-secret',
       };
 
       await expect(service.create(createDto)).rejects.toThrow(
@@ -169,6 +190,51 @@ describe('WebhooksService', () => {
       expect(mockRepository.save).toHaveBeenCalled();
       expect(result.url).toBe(updateDto.url);
       expect(result.isActive).toBe(updateDto.isActive);
+    });
+
+    it('should reject weak webhook secrets during rotation', async () => {
+      const webhook = {
+        id: 'webhook-123',
+        userId: 'user-1',
+        url: 'https://example.com/webhook',
+        events: [WebhookEventType.SPLIT_CREATED],
+        secret: 'old-secret',
+        isActive: true,
+      };
+
+      mockRepository.findOne.mockResolvedValue(webhook);
+
+      await expect(
+        service.update('webhook-123', { secret: 'a' }),
+      ).rejects.toThrow(BadRequestException);
+      expect(mockRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('should accept strong webhook secrets during rotation', async () => {
+      const webhook = {
+        id: 'webhook-123',
+        userId: 'user-1',
+        url: 'https://example.com/webhook',
+        events: [WebhookEventType.SPLIT_CREATED],
+        secret: 'old-secret',
+        isActive: true,
+      };
+      const strongSecret = '0123456789abcdef0123456789abcdef';
+
+      mockRepository.findOne.mockResolvedValue(webhook);
+      mockRepository.save.mockResolvedValue({
+        ...webhook,
+        secret: strongSecret,
+      });
+
+      const result = await service.update('webhook-123', {
+        secret: strongSecret,
+      });
+
+      expect(mockRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({ secret: strongSecret }),
+      );
+      expect(result.secret).toBe(strongSecret);
     });
   });
 

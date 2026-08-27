@@ -16,7 +16,7 @@ export class QBOExporterService {
             const dateStr = this.ratesService.toDateString(split.createdAt);
             const rate = ratesMap.get(dateStr);
 
-            let amountStr: string;
+            let amountStr = '';
             let description = split.description || 'StellarSplit Transaction';
 
             if (rate !== null && rate !== undefined) {

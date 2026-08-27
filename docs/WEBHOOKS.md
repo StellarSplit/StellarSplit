@@ -49,10 +49,7 @@ Authorization: Bearer <your_jwt_token>
 
 {
   "url": "https://your-app.com/webhooks/stellarsplit",
-  "secret": "your-webhook-secret-key",
-  "events": ["split.created", "payment.completed"],
-  "userId": "user-uuid-or-wallet-address",
-  "description": "Payment notifications"
+  "events": ["split.created", "payment.received"]
 }
 ```
 
@@ -61,10 +58,7 @@ Authorization: Bearer <your_jwt_token>
 | Field        | Type     | Required | Description                                                                 |
 | ------------ | -------- | -------- | --------------------------------------------------------------------------- |
 | `url`        | string   | Yes      | HTTPS endpoint where webhook events will be sent                             |
-| `secret`     | string   | Yes      | Secret key used for HMAC signature verification (store securely)            |
 | `events`     | string[] | Yes      | Array of event types to subscribe to (see [Event Types](#event-types))     |
-| `userId`     | string   | Yes      | User ID or wallet address to filter events for                              |
-| `description`| string   | No       | Human-readable description of the webhook's purpose                        |
 
 **Response** `201 Created`
 
@@ -72,10 +66,9 @@ Authorization: Bearer <your_jwt_token>
 {
   "id": "webhook-uuid",
   "url": "https://your-app.com/webhooks/stellarsplit",
-  "secret": "your-webhook-secret-key",
-  "events": ["split.created", "payment.completed"],
+  "secret": "8d4f3c9a1b2e7f0d5c6b8a9e4f2d1c3b8a7e6f5d4c3b2a1908f7e6d5c4b3a291",
+  "events": ["split.created", "payment.received"],
   "userId": "user-uuid-or-wallet-address",
-  "description": "Payment notifications",
   "isActive": true,
   "failureCount": 0,
   "lastTriggeredAt": null,
@@ -83,6 +76,8 @@ Authorization: Bearer <your_jwt_token>
   "updatedAt": "2026-04-28T12:00:00.000Z"
 }
 ```
+
+Store the returned `secret` securely when the webhook is created. StellarSplit generates this 32-byte random signing secret server-side instead of accepting one in the create request.
 
 ### Listing Webhooks
 
@@ -119,9 +114,11 @@ Authorization: Bearer <your_jwt_token>
 
 {
   "url": "https://your-app.com/webhooks/new-endpoint",
-  "events": ["split.created", "payment.completed", "participant.added"]
+  "events": ["split.created", "payment.received", "participant.added"]
 }
 ```
+
+To rotate a webhook secret, send a replacement `secret` with at least 32 non-repeating characters. Weak values such as `secret`, `test`, `changeme`, or repeated single-character secrets are rejected.
 
 ### Deleting a Webhook
 

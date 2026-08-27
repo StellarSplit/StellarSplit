@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { randomBytes } from 'crypto';
 import { Webhook, WebhookEventType } from './webhook.entity';
 import { CreateWebhookDto } from './dto/create-webhook.dto';
 import { UpdateWebhookDto } from './dto/update-webhook.dto';
@@ -13,6 +14,16 @@ import { UpdateWebhookDto } from './dto/update-webhook.dto';
 @Injectable()
 export class WebhooksService {
   private readonly logger = new Logger(WebhooksService.name);
+  private static readonly WEBHOOK_SECRET_BYTES = 32;
+  private static readonly MIN_CLIENT_SECRET_LENGTH = 32;
+  private static readonly WEAK_SECRET_DENY_LIST = new Set([
+    'changeme',
+    'default',
+    'password',
+    'secret',
+    'test',
+    'webhook',
+  ]);
 
   constructor(
     @InjectRepository(Webhook)
@@ -26,7 +37,10 @@ export class WebhooksService {
     }
 
     const webhook = this.webhookRepository.create({
-      ...createWebhookDto,
+      userId: createWebhookDto.userId,
+      url: createWebhookDto.url,
+      events: createWebhookDto.events,
+      secret: this.generateWebhookSecret(),
       isActive: true,
       failureCount: 0,
     });
@@ -80,6 +94,10 @@ export class WebhooksService {
       throw new BadRequestException('Invalid webhook URL');
     }
 
+    if (updateWebhookDto.secret !== undefined) {
+      this.assertStrongWebhookSecret(updateWebhookDto.secret);
+    }
+
     Object.assign(webhook, updateWebhookDto);
     return await this.webhookRepository.save(webhook);
   }
@@ -120,6 +138,24 @@ export class WebhooksService {
       return ['http:', 'https:'].includes(parsed.protocol);
     } catch {
       return false;
+    }
+  }
+
+  private generateWebhookSecret(): string {
+    return randomBytes(WebhooksService.WEBHOOK_SECRET_BYTES).toString('hex');
+  }
+
+  private assertStrongWebhookSecret(secret: string): void {
+    const normalizedSecret = secret.trim().toLowerCase();
+
+    if (
+      secret.length < WebhooksService.MIN_CLIENT_SECRET_LENGTH ||
+      /^(.)\1+$/.test(secret) ||
+      WebhooksService.WEAK_SECRET_DENY_LIST.has(normalizedSecret)
+    ) {
+      throw new BadRequestException(
+        'Webhook secret must be at least 32 characters and not use a weak or common value',
+      );
     }
   }
 }

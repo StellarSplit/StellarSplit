@@ -1,57 +1,42 @@
-# PR Description: Split Calculator Deep-Link Route Support
+# PR Description: Harden Webhook Signing Secrets
 
 ## Summary
 
-This PR adds route-level support for shared Split Calculator links in the StellarSplit frontend. It introduces a dedicated `/calculator` page and a shared-state parser so exported calculator links can round-trip through the router and restore state when valid payloads are present.
+This PR removes client-controlled webhook secrets from creation and makes StellarSplit generate cryptographically strong signing secrets server-side. It also blocks weak client-supplied values during secret rotation so HMAC verification cannot be downgraded after creation.
 
 ## Related issue
 
-- #493 Split Calculator Deep-Link Route Support
+- #729 Webhook Secret Is Fully Client-Supplied With No Entropy Requirement
 
 ## Problem
 
-- `frontend/src/components/SplitCalculator/SplitCalculator.tsx` currently exports share links under `/calculator?data=...`
-- The React router did not mount a real `/calculator` route
-- There was no hydration path for shared calculator state on page reload or incoming links
+- `CreateWebhookDto` accepted any non-empty string as the webhook signing secret.
+- A caller could register a trivially brute-forceable secret such as `"a"`.
+- `WebhookDeliveryService.generateSignature()` uses the webhook secret as the HMAC-SHA256 trust anchor for outbound webhook verification.
 
 ## What changed
 
-### Added
-- `frontend/src/pages/SplitCalculatorPage.tsx`
-  - New routed calculator page
-  - Reads `data` from URL search parameters
-  - Decodes shared calculator payloads
-  - Displays fallback messaging for invalid or malformed payloads
-  - Passes hydrated state into `SplitCalculator`
+- Removed `secret` from `CreateWebhookDto`.
+- Generate new webhook secrets in `WebhooksService.create()` with `crypto.randomBytes(32).toString('hex')`.
+- Build the create payload explicitly so direct service callers cannot smuggle in a weak `secret` property.
+- Validate secret rotation in `WebhooksService.update()`:
+  - minimum 32 characters
+  - reject all-same-character values
+  - reject common weak values such as `secret`, `test`, and `changeme`
+- Added DTO-level validation hints for update requests.
+- Updated webhook documentation to describe server-generated creation secrets and rotation requirements.
 
-- `frontend/src/utils/calculatorShare.ts`
-  - Isolated shared-state encoding and decoding logic
-  - Builds URL-safe share links
-  - Handles invalid payloads gracefully
+## Migration / Backfill Note
 
-### Updated
-- `frontend/src/main.tsx`
-  - Added a real `/calculator` route for the routed calculator page
-
-- `frontend/src/components/SplitCalculator/SplitCalculator.tsx`
-  - Added support for `initialState`
-  - Uses shared-state URL builder/decoder flow
+Existing webhooks may already have weak secrets created before this fix. This PR does not force-rotate them to avoid breaking receivers unexpectedly. Follow-up operational work should identify weak existing secrets using the same minimum length, repeated-character, and deny-list checks, notify affected owners, and rotate each webhook secret through the existing update flow.
 
 ## Validation
 
-- Added tests in `frontend/src/utils/calculatorShare.spec.ts`
-- Added tests in `frontend/src/pages/SplitCalculatorPage.spec.tsx`
-- Verified:
-  - valid share links hydrate calculator state
-  - invalid payloads render fallback messaging
-  - route hydration works after reload
+- `npm test -- --runTestsByPath src/webhooks/webhooks.service.spec.ts src/webhooks/webhook-delivery.service.spec.ts src/webhooks/webhooks.controller.spec.ts`
 
-## Acceptance criteria
+## Acceptance Criteria
 
-- Shared calculator links resolve to a real `/calculator` route
-- Valid `?data=...` payloads restore calculator state
-- Invalid or malformed payloads fall back to default state with a warning
-
-## Notes
-
-This change makes calculator sharing more reliable and maintainable by isolating payload logic from UI and routing concerns.
+- New webhooks receive server-generated 64-character hex secrets from 32 bytes of cryptographic randomness.
+- Client-supplied create secrets are ignored by the service and rejected by the global validation pipe in the HTTP API.
+- Weak update/rotation secrets are rejected.
+- Existing webhook delivery signing flow is unchanged.

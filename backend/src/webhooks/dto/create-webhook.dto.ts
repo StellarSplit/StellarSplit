@@ -29,12 +29,4 @@ export class CreateWebhookDto {
   @IsArray()
   @ArrayNotEmpty()
   events!: WebhookEventType[];
-
-  @ApiProperty({
-    description: 'Secret key for HMAC signature verification',
-    example: 'your-secret-key-here',
-  })
-  @IsString()
-  @IsNotEmpty()
-  secret!: string;
 }

@@ -1,4 +1,12 @@
-import { IsString, IsUrl, IsArray, IsBoolean, IsOptional } from 'class-validator';
+import {
+  IsString,
+  IsUrl,
+  IsArray,
+  IsBoolean,
+  IsOptional,
+  MinLength,
+  Matches,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { WebhookEventType } from '../webhook.entity';
 
@@ -23,10 +31,15 @@ export class UpdateWebhookDto {
   events?: WebhookEventType[];
 
   @ApiProperty({
-    description: 'Secret key for HMAC signature verification',
+    description:
+      'Optional replacement secret for HMAC signature verification. Must be at least 32 non-repeating characters. New webhooks receive a server-generated secret.',
     required: false,
   })
   @IsString()
+  @MinLength(32)
+  @Matches(/^(?!(.)\1+$).+$/, {
+    message: 'secret must not be a repeated single character',
+  })
   @IsOptional()
   secret?: string;
 
