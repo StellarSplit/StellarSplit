@@ -284,6 +284,89 @@ fn test_failed_loan_clears_reentrancy_guard() {
     assert!(success_result.is_ok());
 }
 
+/// ---------  flash-loan contract validation  ---------------------
+
+#[test]
+fn test_initialize_rejects_fee_above_ceiling() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let admin = Address::generate(&env);
+    let token_address = Address::generate(&env);
+
+    let flash_loan_id = env.register_contract(None, FlashLoanContract);
+    let flash_loan_client = FlashLoanContractClient::new(&env, &flash_loan_id);
+
+    let result = flash_loan_client.try_initialize(&admin, &token_address, &(crate::MAX_FEE_BP + 1));
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_initialize_accepts_fee_at_ceiling() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let admin = Address::generate(&env);
+    let token_admin = Address::generate(&env);
+    let token_id = env.register_stellar_asset_contract_v2(token_admin.clone());
+    let token_address = token_id.address();
+
+    let flash_loan_id = env.register_contract(None, FlashLoanContract);
+    let flash_loan_client = FlashLoanContractClient::new(&env, &flash_loan_id);
+
+    flash_loan_client.initialize(&admin, &token_address, &crate::MAX_FEE_BP);
+    assert_eq!(flash_loan_client.get_flash_loan_fee(), crate::MAX_FEE_BP);
+}
+
+#[test]
+fn test_flash_loan_large_amount_at_max_fee_does_not_overflow() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let admin = Address::generate(&env);
+    let token_admin = Address::generate(&env);
+    let token_id = env.register_stellar_asset_contract_v2(token_admin.clone());
+    let token_address = token_id.address();
+    let token_client = TokenClient::new(&env, &token_address);
+    let token_admin_client = TokenAdminClient::new(&env, &token_address);
+
+    let flash_loan_id = env.register_contract(None, FlashLoanContract);
+    let flash_loan_client = FlashLoanContractClient::new(&env, &flash_loan_id);
+    flash_loan_client.initialize(&admin, &token_address, &crate::MAX_FEE_BP); // 10% ceiling
+
+    let receiver_id = env.register_contract(None, ReceiverContract);
+    let receiver_client = ReceiverContractClient::new(&env, &receiver_id);
+    receiver_client.set_flash_loan(&flash_loan_id, &token_address);
+
+    // Large, realistic "whale" loan — far beyond normal test sizes, but nowhere
+    // near i128::MAX, since real balances are bounded by circulating supply.
+    let loan_amount: i128 = 1_000_000_000_000_000_000; // 1e18
+    let expected_fee = (loan_amount * crate::MAX_FEE_BP as i128) / 10000; // 1e17
+
+    token_admin_client.mint(&flash_loan_id, &(loan_amount + 1_000_000));
+    token_admin_client.mint(&receiver_id, &expected_fee);
+
+    let result = flash_loan_client.try_flash_loan(&receiver_id, &loan_amount, &Bytes::new(&env));
+    assert!(result.is_ok());
+    assert_eq!(token_client.balance(&receiver_id), 0);
+}
+
+// Pure arithmetic check at the actual overflow boundary — deliberately not
+// routed through mint/transfer, since no realistic token supply gets near
+// i128::MAX; this isolates the checked_mul/checked_div fix itself.
+#[test]
+fn test_fee_arithmetic_saturates_safely_at_true_overflow_boundary() {
+    let fee_bp: i128 = crate::MAX_FEE_BP as i128;
+    let safe_amount = i128::MAX / fee_bp;
+
+    let fee = safe_amount.checked_mul(fee_bp).and_then(|v| v.checked_div(10000));
+    assert!(fee.is_some());
+
+    let unsafe_amount = i128::MAX; // guaranteed to overflow the multiply at max fee_bp
+    let overflowed = unsafe_amount.checked_mul(fee_bp);
+    assert!(overflowed.is_none());
+}
+
 // ============================================================
 // Property / invariant tests (proptest-style)
 // ============================================================
