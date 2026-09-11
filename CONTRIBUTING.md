@@ -1,4 +1,4 @@
-mkdir -p docs# Contributing to StellarSplit 
+# Contributing to StellarSplit
 
 Thank you for your interest in contributing to StellarSplit! We're building a tool that makes splitting bills effortless for everyone. Your contributions help solve a universal problem.
 
@@ -17,21 +17,22 @@ There are many ways to contribute to StellarSplit:
 
 ---
 
-## Drips Wave Program
+## GrantFox OSS Contributions
 
-StellarSplit is part of the **Stellar Drips Wave Program**! This means you can earn rewards for contributing:
+StellarSplit participates in **GrantFox** OSS Campaigns! This means you can earn rewards for contributing:
 
-- Browse issues tagged with `drips-wave` or `stellar-wave`
-- Apply to work on an issue through the [Drips Wave platform](https://www.drips.network/wave)
-- Complete the work and submit a PR
-- Earn rewards when maintainers mark the issue as resolved
+- Browse issues tagged `GrantFox OSS` and the active campaign name (e.g. `Third Campaign`)
+- Apply to work on an issue through [GrantFox](https://contribute.grantfox.xyz)
+- Complete the work and submit a PR against this repo, linking the issue it closes
+- Rewards are reviewed by maintainers after the campaign ends — only completed, merged, reviewed work is eligible
 
 **Important Notes:**
-- Only apply through the Drips Wave platform to be eligible for rewards
-- Issues must be tagged with the active Wave program name
-- Read the full [Drips Wave Terms](https://docs.drips.network/wave/terms-and-rules)
+
+- Apply through GrantFox to be tracked for eligibility
+- Issues must be tagged with the active campaign name
 - Maintainers have final say on whether work resolves the issue
 - Quality over speed - we value well-tested, documented contributions
+- Rewards are not guaranteed for every contribution - see [GrantFox's Rewards docs](https://docs.grantfox.xyz/key-concepts/rewards) for how eligibility works
 
 ---
 
@@ -41,11 +42,11 @@ StellarSplit is part of the **Stellar Drips Wave Program**! This means you can e
 
 ```bash
 # Fork the repository on GitHub, then:
-git clone https://github.com/OlufunbiIK/stellarsplit
-cd stellarsplit
+git clone https://github.com/StellarSplit/StellarSplit
+cd StellarSplit
 
 # Add upstream remote
-git remote add upstream https://github.com/OlufunbiIK/stellarsplit
+git remote add upstream https://github.com/StellarSplit/StellarSplit
 ```
 
 ### 2. Set Up Your Environment
@@ -71,6 +72,7 @@ npm run dev
 ```
 
 The app will be available at:
+
 - Frontend: `http://localhost:3000`
 - Backend API: `http://localhost:4000`
 
@@ -85,6 +87,7 @@ git checkout -b fix/bug-description
 ```
 
 **Branch Naming Convention:**
+
 - `feature/` - New features
 - `fix/` - Bug fixes
 - `docs/` - Documentation updates
@@ -99,7 +102,7 @@ git checkout -b fix/bug-description
 
 ### Find or Create an Issue
 
-- Check [existing issues](https://github.com/OlufunbiIK/stellarsplit/issues) to avoid duplication
+- Check [existing issues](https://github.com/StellarSplit/StellarSplit/issues) to avoid duplication
 - For bugs, search closed issues - it might already be fixed
 - For new features, open an issue to discuss before implementing
 - Comment on an issue to express interest or ask questions
@@ -107,16 +110,18 @@ git checkout -b fix/bug-description
 ### Good First Issues
 
 Look for issues tagged with:
+
 - `good-first-issue` - Great for newcomers
 - `help-wanted` - We need community help
 - `documentation` - Improve docs
 - `ui-enhancement` - Visual improvements
-- `drips-wave` - Eligible for Wave rewards
+- `GrantFox OSS` - Eligible for GrantFox campaign rewards
 
-### Issue Application (for Drips Wave)
+### Issue Application (for GrantFox)
 
-If you're applying through Drips Wave:
-1. Apply via the Drips Wave platform (not just GitHub comments)
+If you're applying through GrantFox:
+
+1. Apply via the GrantFox platform (not just GitHub comments)
 2. Wait for maintainer approval before starting work
 3. Only one contributor per issue
 4. Respect the assignment - don't work on issues assigned to others
@@ -179,7 +184,7 @@ Check the current status in `contracts/README.md` or `docs/contract-ci.md`.
 ```bash
 # All three checks must pass
 bash scripts/ci-contracts.sh fmt    # Code formatting
-bash scripts/ci-contracts.sh test   # Unit tests  
+bash scripts/ci-contracts.sh test   # Unit tests
 bash scripts/ci-contracts.sh build  # WASM compilation
 ```
 
@@ -259,6 +264,7 @@ npm run type-check
 ```
 
 **Standards:**
+
 - Use TypeScript for type safety
 - Follow existing code patterns
 - Write meaningful variable names
@@ -270,6 +276,7 @@ npm run type-check
 ### Mobile-First Development
 
 Since StellarSplit is mobile-first:
+
 - Test on actual mobile devices when possible
 - Use Chrome DevTools mobile emulation
 - Ensure touch targets are at least 44x44px
@@ -290,6 +297,7 @@ type(scope): subject
 ```
 
 **Types:**
+
 - `feat:` - New feature
 - `fix:` - Bug fix
 - `docs:` - Documentation changes
@@ -300,6 +308,7 @@ type(scope): subject
 - `perf:` - Performance improvements
 
 **Examples:**
+
 ```bash
 feat(ocr): add OpenAI Vision API integration for better receipt scanning
 
@@ -331,6 +340,7 @@ npm run test:e2e
 ```
 
 **Test Guidelines:**
+
 - Write unit tests for new functions and components
 - Add integration tests for API endpoints
 - Test edge cases and error conditions
@@ -354,11 +364,11 @@ try {
   const transaction = await sendPayment(recipient, amount);
   return { success: true, txHash: transaction.hash };
 } catch (error) {
-  if (error.code === 'INSUFFICIENT_BALANCE') {
-    return { success: false, error: 'Not enough XLM' };
+  if (error.code === "INSUFFICIENT_BALANCE") {
+    return { success: false, error: "Not enough XLM" };
   }
-  if (error.code === 'INVALID_ADDRESS') {
-    return { success: false, error: 'Invalid Stellar address' };
+  if (error.code === "INVALID_ADDRESS") {
+    return { success: false, error: "Invalid Stellar address" };
   }
   throw error;
 }
@@ -403,11 +413,13 @@ git push origin feature/your-feature-name
 ```
 
 **PR Title Format:**
+
 ```
 [Type] Brief description (#issue-number)
 ```
 
 Examples:
+
 - `[Feature] Add percentage-based split option (#42)`
 - `[Fix] Resolve camera permission issue on iOS (#89)`
 - `[UI] Improve payment link design (#15)`
@@ -416,12 +428,15 @@ Examples:
 
 ```markdown
 ## Description
+
 Brief description of changes
 
 ## Related Issue
+
 Closes #123
 
 ## Type of Change
+
 - [ ] Bug fix
 - [ ] New feature
 - [ ] Breaking change
@@ -429,19 +444,23 @@ Closes #123
 - [ ] UI/UX improvement
 
 ## Testing
+
 Describe how you tested your changes
 
 ## Mobile Testing
-- [ ] Tested on iOS (version: ___)
-- [ ] Tested on Android (version: ___)
+
+- [ ] Tested on iOS (version: \_\_\_)
+- [ ] Tested on Android (version: \_\_\_)
 - [ ] Tested on different screen sizes
 - [ ] Tested camera functionality
 - [ ] Tested on slow network
 
 ## Screenshots (if applicable)
+
 Add screenshots for UI changes (mobile + desktop)
 
 ## Checklist
+
 - [ ] My code follows the project style guidelines
 - [ ] I have performed a self-review
 - [ ] I have commented complex code
@@ -478,7 +497,7 @@ git push origin --delete feature/your-feature-name
 
 ### Before Reporting
 
-- Check [existing issues](https://github.com/OlufunbiIK/stellarsplit/issues)
+- Check [existing issues](https://github.com/StellarSplit/StellarSplit/issues)
 - Try the latest version
 - Test on different devices/browsers
 - Search Discord/community channels
@@ -491,6 +510,7 @@ Clear description of what the bug is
 
 **To Reproduce**
 Steps to reproduce:
+
 1. Go to '...'
 2. Click on '...'
 3. See error
@@ -502,6 +522,7 @@ What you expected to happen
 If applicable, especially for UI bugs
 
 **Device Information:**
+
 - Device: [e.g. iPhone 14, Samsung Galaxy S21]
 - OS: [e.g. iOS 16.5, Android 13]
 - Browser: [e.g. Safari, Chrome 120]
@@ -611,6 +632,7 @@ Help make StellarSplit accessible globally:
 5. Submit PR with new locale file
 
 **Translation Guidelines:**
+
 - Maintain tone (friendly, casual, helpful)
 - Keep strings concise for mobile screens
 - Test UI with longer translations
@@ -628,6 +650,7 @@ We are committed to providing a welcoming and inspiring community for all.
 ### Our Standards
 
 **Positive behavior:**
+
 - Using welcoming and inclusive language
 - Being respectful of differing viewpoints
 - Gracefully accepting constructive criticism
@@ -636,6 +659,7 @@ We are committed to providing a welcoming and inspiring community for all.
 - Helping newcomers get started
 
 **Unacceptable behavior:**
+
 - Harassment or discriminatory language
 - Trolling, insulting, or derogatory comments
 - Public or private harassment
@@ -652,16 +676,17 @@ Violations can be reported to maintainers at conduct@stellarsplit.app. All compl
 
 **Stuck? Need clarification?**
 
-- 💬 [Join our Discord] https://discord.gg/mpzbyTY6
+- 💬 [Join our Discord](https://discord.gg/mpzbyTY6)
 - 📧 Email: dev@stellarsplit.app
-- 🐦 Twitter: [[@StellarSplit] https://web.telegram.org/k/#-5269864612
 - 📖 [Documentation](https://docs.stellarsplit.app)
 
-**For Drips Wave specific questions:**
-- Visit [Drips Wave Support](https://www.drips.network/wave/support)
-- Read [Wave Documentation](https://docs.drips.network/wave)
+**For GrantFox-specific questions:**
+
+- Visit the [GrantFox community chat](https://t.me/grantfoxcommunity)
+- Read the [GrantFox Contributor Guide](https://docs.grantfox.xyz/user-manual-guides/oss-contributions-guide/contributor-guide)
 
 **Common Questions:**
+
 - Camera not working? Check browser permissions
 - OCR not accurate? Try better lighting and flat surface
 - Stellar transaction failing? Verify testnet/mainnet network
@@ -672,12 +697,14 @@ Violations can be reported to maintainers at conduct@stellarsplit.app. All compl
 ## Recognition
 
 Contributors will be:
+
 - Listed in our [CONTRIBUTORS.md](CONTRIBUTORS.md) file
 - Mentioned in release notes
 - Featured in community spotlights
 - Eligible for special contributor roles in Discord
 
 **Top Contributors** get:
+
 - Early access to new features
 - Input on roadmap decisions
 - Exclusive StellarSplit swag
@@ -697,6 +724,7 @@ By contributing to StellarSplit, you agree that your contributions will be licen
 Not sure where to start? Here are some ideas:
 
 **For Beginners:**
+
 - Fix typos in documentation
 - Improve error messages
 - Add more test cases
@@ -704,6 +732,7 @@ Not sure where to start? Here are some ideas:
 - Improve accessibility
 
 **For Intermediate:**
+
 - Add new split methods
 - Improve OCR accuracy
 - Enhance mobile UI
@@ -711,6 +740,7 @@ Not sure where to start? Here are some ideas:
 - Build new components
 
 **For Advanced:**
+
 - Optimize performance
 - Implement PWA features
 - Add offline support
@@ -743,4 +773,4 @@ Not sure where to start? Here are some ideas:
 
 ---
 
-*Last updated: January 2026*
+_Last updated: September 2026_
