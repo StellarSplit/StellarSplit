@@ -13,4 +13,6 @@ pub enum Error {
     LoanAlreadyRepaid = 6,
     FlashLoanCallbackFailed = 7,
     ReentrancyGuardActive = 8,
+    FeeTooHigh = 10,
+    FeeCalculationOverflow = 11,
 }

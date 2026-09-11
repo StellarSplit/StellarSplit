@@ -15,6 +15,13 @@ mod test;
 pub use crate::errors::*;
 pub use crate::types::*;
 
+/// Maximum allowed flash-loan fee, in basis points (1000 bp = 10%).
+/// This is a generous ceiling, not a target — real flash-loan fees are
+/// typically well under 1%. Confirm this exact value with product/
+/// maintainers before shipping; it's a business decision as much as a
+/// safety one.
+pub(crate) const MAX_FEE_BP: u32 = 1000;
+
 #[contract]
 pub struct FlashLoanContract;
 
@@ -24,6 +31,9 @@ impl FlashLoanContract {
     pub fn initialize(env: Env, admin: Address, token: Address, fee_bp: u32) -> Result<(), Error> {
         if storage::has_admin(&env) {
             return Err(Error::AlreadyInitialized);
+        }
+        if fee_bp > MAX_FEE_BP {
+            return Err(Error::FeeTooHigh);
         }
         admin.require_auth();
         storage::set_admin(&env, &admin);
@@ -51,7 +61,22 @@ impl FlashLoanContract {
         storage::set_reentrancy_guard(&env, true);
 
         let fee_bp = storage::get_fee_bp(&env);
-        let fee = (amount * fee_bp as i128) / 10000;
+
+        // Use checked arithmetic instead of a raw `*` so that a pathological
+        // (amount, fee_bp) pair can never panic or silently wrap the contract
+        // into an incorrect fee — it fails cleanly instead. In practice this
+        // is unreachable for realistic token supplies even at MAX_FEE_BP, but
+        // the invariant should hold structurally, not just by convention.
+        let fee = match amount
+            .checked_mul(fee_bp as i128)
+            .and_then(|v| v.checked_div(10000))
+        {
+            Some(f) => f,
+            None => {
+                storage::set_reentrancy_guard(&env, false);
+                return Err(Error::FeeCalculationOverflow);
+            }
+        };
 
         let token_address = storage::get_token(&env);
         let token_client = token::Client::new(&env, &token_address);
