@@ -359,7 +359,9 @@ fn test_fee_arithmetic_saturates_safely_at_true_overflow_boundary() {
     let fee_bp: i128 = crate::MAX_FEE_BP as i128;
     let safe_amount = i128::MAX / fee_bp;
 
-    let fee = safe_amount.checked_mul(fee_bp).and_then(|v| v.checked_div(10000));
+    let fee = safe_amount
+        .checked_mul(fee_bp)
+        .and_then(|v| v.checked_div(10000));
     assert!(fee.is_some());
 
     let unsafe_amount = i128::MAX; // guaranteed to overflow the multiply at max fee_bp
