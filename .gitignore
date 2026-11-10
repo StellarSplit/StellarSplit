@@ -7,8 +7,6 @@ backend/node_modules/
 # ========================
 # Environment variables
 # ========================
-.env
-.env.local
 .env.development.local
 .env.test.local
 .env.production.local
@@ -42,7 +40,6 @@ backend/coverage/
 # ========================
 # Editor / IDE
 # ========================
-.vscode/
 .idea/
 .qoder/
 *.swp
@@ -77,3 +74,4 @@ Cargo.lock
 # API-incompatible 3.x and fails to build.
 !contracts/Cargo.lock
 build_errors*.txt
+config.bat
